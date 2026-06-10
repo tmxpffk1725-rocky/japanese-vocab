@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 
 const STORAGE_KEY = "jp_vocab_words";
+const DAILY_KEY = "jp_vocab_daily";
+const COOLDOWN_DAYS = 4;
+const DAILY_COUNT = 30;
 
 const sampleWords = [
   { id: 1, japanese: "勉強", reading: "べんきょう", korean: "공부", example: "毎日勉強しています。", wrong: 0 },
@@ -14,7 +17,41 @@ function shuffle(arr) {
   return [...arr].sort(() => Math.random() - 0.5);
 }
 
-// 루비 텍스트 컴포넌트 (한자 위에 히라가나)
+function getTodayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+// 오늘의 30단어 선택 로직
+// daily 구조: { date: "2026-06-10", wordIds: [1,2,...], usedDates: { wordId: "2026-06-08", ... } }
+function getDailyWords(words, savedDaily) {
+  const today = getTodayStr();
+
+  // 오늘 이미 선택된 단어가 있으면 그대로 사용
+  if (savedDaily && savedDaily.date === today && savedDaily.wordIds) {
+    const todayWords = savedDaily.wordIds
+      .map(id => words.find(w => w.id === id))
+      .filter(Boolean);
+    if (todayWords.length > 0) return todayWords;
+  }
+
+  // 쿨다운 계산: 최근 COOLDOWN_DAYS일 안에 나온 단어 제외
+  const usedDates = savedDaily?.usedDates || {};
+  const cooldownDate = new Date();
+  cooldownDate.setDate(cooldownDate.getDate() - COOLDOWN_DAYS);
+  const cooldownStr = cooldownDate.toISOString().slice(0, 10);
+
+  const available = words.filter(w => {
+    const lastUsed = usedDates[w.id];
+    return !lastUsed || lastUsed <= cooldownStr;
+  });
+
+  // 사용 가능한 단어가 30개 미만이면 쿨다운 무시하고 전체에서 선택
+  const pool = available.length >= DAILY_COUNT ? available : words;
+  const selected = shuffle(pool).slice(0, Math.min(DAILY_COUNT, pool.length));
+
+  return selected;
+}
+
 function RubyText({ japanese, reading, size = 32, color = "#2d1f14" }) {
   if (!reading) {
     return <span style={{ fontSize: size, fontWeight: 700, color, fontFamily: "'Noto Sans JP', sans-serif", letterSpacing: 2 }}>{japanese}</span>;
@@ -35,20 +72,56 @@ export default function App() {
     } catch { return sampleWords; }
   });
 
+  const [daily, setDaily] = useState(() => {
+    try {
+      const saved = localStorage.getItem(DAILY_KEY);
+      return saved ? JSON.parse(saved) : null;
+    } catch { return null; }
+  });
+
   const [tab, setTab] = useState("list");
   const [form, setForm] = useState({ japanese: "", reading: "", korean: "", example: "" });
   const [editId, setEditId] = useState(null);
   const [card, setCard] = useState(null);
   const [cardMode, setCardMode] = useState("random");
   const [wrongOnly, setWrongOnly] = useState(false);
+  const [dailyOnly, setDailyOnly] = useState(true);
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState("");
   const [choices, setChoices] = useState([]);
   const [selected, setSelected] = useState(null);
   const [answered, setAnswered] = useState(false);
 
+  // 오늘의 단어 목록
+  const [dailyWords, setDailyWords] = useState(() => {
+    try {
+      const savedDaily = localStorage.getItem(DAILY_KEY);
+      const parsedDaily = savedDaily ? JSON.parse(savedDaily) : null;
+      const savedWords = localStorage.getItem(STORAGE_KEY);
+      const parsedWords = savedWords ? JSON.parse(savedWords) : sampleWords;
+      return getDailyWords(parsedWords, parsedDaily);
+    } catch { return []; }
+  });
+
   useEffect(() => {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(words)); } catch {}
+  }, [words]);
+
+  // daily 상태 저장 및 오늘 단어 갱신
+  useEffect(() => {
+    const today = getTodayStr();
+    const usedDates = daily?.usedDates || {};
+
+    // 날짜가 바뀌었거나 처음이면 새로 선택
+    if (!daily || daily.date !== today) {
+      const newDailyWords = getDailyWords(words, daily);
+      const newUsedDates = { ...usedDates };
+      newDailyWords.forEach(w => { newUsedDates[w.id] = today; });
+      const newDaily = { date: today, wordIds: newDailyWords.map(w => w.id), usedDates: newUsedDates };
+      setDaily(newDaily);
+      setDailyWords(newDailyWords);
+      try { localStorage.setItem(DAILY_KEY, JSON.stringify(newDaily)); } catch {}
+    }
   }, [words]);
 
   const showToast = (msg) => {
@@ -61,15 +134,17 @@ export default function App() {
   });
 
   const makeChoices = useCallback((correctWord, showKorean) => {
-    const others = words.filter(w => w.id !== correctWord.id);
-    const wrong3 = shuffle(others).slice(0, 3);
+    const pool = dailyOnly ? dailyWords : words;
+    const others = pool.filter(w => w.id !== correctWord.id);
+    const wrong3 = shuffle(others.length >= 3 ? others : words.filter(w => w.id !== correctWord.id)).slice(0, 3);
     const answer = showKorean ? correctWord.japanese : correctWord.korean;
     const wrongAnswers = wrong3.map(w => showKorean ? w.japanese : w.korean);
     return shuffle([answer, ...wrongAnswers]);
-  }, [words]);
+  }, [words, dailyWords, dailyOnly]);
 
   const drawCard = useCallback(() => {
-    const pool = wrongOnly ? words.filter(w => w.wrong > 0) : words;
+    const basePool = dailyOnly ? dailyWords : words;
+    const pool = wrongOnly ? basePool.filter(w => w.wrong > 0) : basePool;
     if (pool.length === 0) { setCard(null); return; }
     const random = pool[Math.floor(Math.random() * pool.length)];
     const showKorean = cardMode === "random" ? Math.random() > 0.5 : cardMode === "korean";
@@ -77,7 +152,7 @@ export default function App() {
     setSelected(null);
     setAnswered(false);
     setChoices(makeChoices(random, showKorean));
-  }, [words, cardMode, wrongOnly, makeChoices]);
+  }, [words, dailyWords, cardMode, wrongOnly, dailyOnly, makeChoices]);
 
   useEffect(() => {
     if (tab === "flash") drawCard();
@@ -156,7 +231,8 @@ export default function App() {
     }
   };
 
-  const noCard = !card || (wrongOnly && words.filter(w => w.wrong > 0).length === 0);
+  const activePool = dailyOnly ? dailyWords : words;
+  const noCard = !card || (wrongOnly && activePool.filter(w => w.wrong > 0).length === 0) || activePool.length === 0;
 
   return (
     <div style={styles.container}>
@@ -182,15 +258,18 @@ export default function App() {
         </div>
         <div style={styles.stats}>
           <span style={styles.statBadge}>총 {words.length}개</span>
+          <span style={{ ...styles.statBadge, background: "#3a5a3a", color: "#a8d4a8" }}>
+            오늘 {dailyWords.length}개
+          </span>
           <span style={{ ...styles.statBadge, background: "#ffe0cc", color: "#c0622a" }}>
-            틀린 단어 {words.filter(w => w.wrong > 0).length}개
+            틀린 {words.filter(w => w.wrong > 0).length}개
           </span>
         </div>
       </div>
 
       <div style={styles.tabs}>
         {[["list", "📚 단어 목록"], ["add", editId ? "✏️ 수정" : "➕ 단어 추가"], ["flash", "🃏 플래시카드"]].map(([key, label]) => (
-          <button key={key} className="tab-btn" onClick={() => { setTab(key); if (key !== "add") { setEditId(null); setForm({ japanese: "", reading: "", korean: "", type: "kanji", example: "" }); } }}
+          <button key={key} className="tab-btn" onClick={() => { setTab(key); if (key !== "add") { setEditId(null); setForm({ japanese: "", reading: "", korean: "", example: "" }); } }}
             style={{ ...styles.tab, ...(tab === key ? styles.tabActive : {}) }}>
             {label}
           </button>
@@ -205,7 +284,6 @@ export default function App() {
             <div style={styles.filterRow}>
               <input placeholder="🔍 검색..." value={search} onChange={e => setSearch(e.target.value)} style={styles.searchInput} />
             </div>
-            {/* 내보내기/가져오기 */}
             <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
               <button onClick={handleExport}
                 style={{ flex: 1, padding: "10px 0", borderRadius: 10, border: "1.5px solid #9b7ce8", background: "#f8f3ff", color: "#9b7ce8", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Gowun Dodum', sans-serif" }}>
@@ -217,28 +295,40 @@ export default function App() {
               </label>
             </div>
 
+            {/* 오늘의 단어 배너 */}
+            <div style={{ background: "#edf7ed", border: "1.5px solid #a8d4a8", borderRadius: 12, padding: "12px 16px", marginBottom: 12 }}>
+              <div style={{ fontSize: 12, color: "#4a7a4a", fontWeight: 700, marginBottom: 4 }}>📅 오늘의 단어 ({getTodayStr()})</div>
+              <div style={{ fontSize: 13, color: "#4a7a4a" }}>
+                {dailyWords.length}개 선택됨 · 같은 단어는 {COOLDOWN_DAYS}일 안에 다시 안 나와요
+              </div>
+            </div>
+
             {filtered.length === 0 ? (
               <div style={styles.empty}><div style={{ fontSize: 48, marginBottom: 12 }}>📭</div><div style={{ color: "#9e8878" }}>단어가 없어요!</div></div>
             ) : (
               <div style={styles.wordList}>
-                {filtered.map(w => (
-                  <div key={w.id} className="word-row" style={styles.wordRow}>
-                    <div style={styles.wordLeft}>
-                      <div>
-                        <div style={{ marginBottom: 2 }}>
-                          <RubyText japanese={w.japanese} reading={w.reading} size={18} />
+                {filtered.map(w => {
+                  const isToday = dailyWords.some(d => d.id === w.id);
+                  return (
+                    <div key={w.id} className="word-row" style={{ ...styles.wordRow, borderLeft: isToday ? "3px solid #7cc87c" : "1px solid #ede5da" }}>
+                      <div style={styles.wordLeft}>
+                        <div>
+                          <div style={{ marginBottom: 2, display: "flex", alignItems: "center", gap: 6 }}>
+                            <RubyText japanese={w.japanese} reading={w.reading} size={18} />
+                            {isToday && <span style={{ fontSize: 10, background: "#edf7ed", color: "#4a7a4a", padding: "1px 6px", borderRadius: 8, fontWeight: 700 }}>오늘</span>}
+                          </div>
+                          <div style={styles.korean}>{w.korean}</div>
+                          {w.example && <div style={styles.example}>{w.example}</div>}
                         </div>
-                        <div style={styles.korean}>{w.korean}</div>
-                        {w.example && <div style={styles.example}>{w.example}</div>}
+                      </div>
+                      <div style={styles.wordRight}>
+                        {w.wrong > 0 && <span style={styles.wrongBadge}>틀림 {w.wrong}</span>}
+                        <button onClick={() => handleEdit(w)} style={{ ...styles.iconBtn, color: "#7cb8e8" }}>✏️</button>
+                        <button onClick={() => handleDelete(w.id)} style={{ ...styles.iconBtn, color: "#e87c7c" }}>🗑️</button>
                       </div>
                     </div>
-                    <div style={styles.wordRight}>
-                      {w.wrong > 0 && <span style={styles.wrongBadge}>틀림 {w.wrong}</span>}
-                      <button onClick={() => handleEdit(w)} style={{ ...styles.iconBtn, color: "#7cb8e8" }}>✏️</button>
-                      <button onClick={() => handleDelete(w.id)} style={{ ...styles.iconBtn, color: "#e87c7c" }}>🗑️</button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -248,31 +338,24 @@ export default function App() {
         {tab === "add" && (
           <div style={styles.formCard}>
             <h2 style={styles.formTitle}>{editId ? "단어 수정" : "새 단어 추가"}</h2>
-
             <label style={styles.label}>일본어 * <span style={{ color: "#b09a88", fontWeight: 400 }}>(한자, 히라가나, 가타카나 모두 가능)</span></label>
             <input value={form.japanese} onChange={e => setForm(f => ({ ...f, japanese: e.target.value }))}
               placeholder="예: 勉強 / ありがとう / コーヒー" style={styles.input} />
-
             <label style={styles.label}>히라가나 읽기 <span style={{ color: "#b09a88", fontWeight: 400 }}>(한자인 경우 입력, 히라가나/가타카나는 생략 가능)</span></label>
             <input value={form.reading} onChange={e => setForm(f => ({ ...f, reading: e.target.value }))}
               placeholder="예: べんきょう" style={styles.input} />
-
-            {/* 미리보기 */}
             {form.japanese && (
               <div style={{ background: "#f8f3ff", borderRadius: 12, padding: "14px 16px", marginBottom: 16, textAlign: "center", border: "1.5px solid #d4c0f0" }}>
                 <div style={{ fontSize: 11, color: "#9b7ce8", marginBottom: 8, fontWeight: 700 }}>미리보기</div>
                 <RubyText japanese={form.japanese} reading={form.reading} size={28} />
               </div>
             )}
-
             <label style={styles.label}>한국어 뜻 *</label>
             <input value={form.korean} onChange={e => setForm(f => ({ ...f, korean: e.target.value }))}
               placeholder="예: 공부" style={styles.input} />
-
             <label style={styles.label}>예문 (선택)</label>
             <textarea value={form.example} onChange={e => setForm(f => ({ ...f, example: e.target.value }))}
               placeholder="예: 毎日勉強しています。" style={{ ...styles.input, height: 72, resize: "none", fontFamily: "'Noto Sans JP', sans-serif" }} />
-
             <button className="btn-hover" onClick={handleSubmit} style={styles.submitBtn}>{editId ? "수정 완료" : "저장하기"}</button>
             {editId && <button onClick={() => { setEditId(null); setForm({ japanese: "", reading: "", korean: "", example: "" }); }} style={{ ...styles.submitBtn, background: "#e0d5cc", color: "#6b5744", marginTop: 8 }}>취소</button>}
           </div>
@@ -281,12 +364,24 @@ export default function App() {
         {/* FLASH */}
         {tab === "flash" && (
           <div>
+            {/* 오늘의 단어 진행 상황 */}
+            <div style={{ background: "#edf7ed", border: "1.5px solid #a8d4a8", borderRadius: 12, padding: "10px 14px", marginBottom: 12 }}>
+              <div style={{ fontSize: 12, color: "#4a7a4a", fontWeight: 700 }}>
+                📅 오늘의 단어 {dailyWords.length}개
+                <span style={{ fontWeight: 400, marginLeft: 6 }}>· {COOLDOWN_DAYS}일 쿨다운</span>
+              </div>
+            </div>
+
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
               <select value={cardMode} onChange={e => setCardMode(e.target.value)} style={styles.select}>
                 <option value="random">랜덤 방향</option>
                 <option value="japanese">일본어 → 한국어</option>
                 <option value="korean">한국어 → 일본어</option>
               </select>
+              <button onClick={() => { setDailyOnly(p => !p); }}
+                style={{ ...styles.select, cursor: "pointer", background: dailyOnly ? "#7cc87c" : "#fff", color: dailyOnly ? "#fff" : "#6b5744", border: `1.5px solid #7cc87c`, fontWeight: dailyOnly ? 700 : 400 }}>
+                {dailyOnly ? "✓ 오늘 단어만" : "오늘 단어만"}
+              </button>
               <button onClick={() => setWrongOnly(p => !p)}
                 style={{ ...styles.select, cursor: "pointer", background: wrongOnly ? "#e8a87c" : "#fff", color: wrongOnly ? "#fff" : "#6b5744", border: `1.5px solid #e8a87c`, fontWeight: wrongOnly ? 700 : 400 }}>
                 {wrongOnly ? "✓ 틀린 단어만" : "틀린 단어만"}
@@ -312,7 +407,7 @@ export default function App() {
                   </div>
                 </div>
 
-                {words.length < 4 ? (
+                {activePool.length < 4 ? (
                   <div style={{ textAlign: "center", padding: 20, color: "#b09a88", fontSize: 14 }}>4지선다는 단어가 4개 이상 필요해요!</div>
                 ) : (
                   <div>
@@ -372,7 +467,7 @@ const styles = {
   headerInner: { display: "flex", alignItems: "baseline", gap: 10, marginBottom: 10 },
   logo: { fontSize: 28, fontWeight: 700, fontFamily: "'Noto Sans JP', sans-serif", color: "#e8c89a" },
   logoSub: { fontSize: 13, color: "#a08878" },
-  stats: { display: "flex", gap: 8 },
+  stats: { display: "flex", gap: 8, flexWrap: "wrap" },
   statBadge: { background: "#3d2d1e", color: "#c4a882", padding: "4px 10px", borderRadius: 20, fontSize: 12 },
   tabs: { display: "flex", background: "#3d2d1e" },
   tab: { flex: 1, padding: "12px 0", border: "none", background: "transparent", color: "#a08878", fontSize: 13, cursor: "pointer", fontFamily: "'Gowun Dodum', sans-serif" },
@@ -380,12 +475,9 @@ const styles = {
   content: { padding: 16 },
   filterRow: { marginBottom: 12 },
   searchInput: { width: "100%", padding: "10px 14px", border: "1.5px solid #d4c5b5", borderRadius: 10, background: "#fff", fontSize: 14, fontFamily: "'Gowun Dodum', sans-serif", marginBottom: 10, color: "#2d1f14" },
-  typeFilters: { display: "flex", gap: 6, flexWrap: "wrap" },
-  typePill: { padding: "6px 12px", borderRadius: 20, border: "1.5px solid #d4c5b5", background: "#fff", cursor: "pointer", fontSize: 12, fontFamily: "'Gowun Dodum', sans-serif", transition: "all 0.2s" },
   wordList: { display: "flex", flexDirection: "column", gap: 8 },
-  wordRow: { background: "#fff", borderRadius: 12, padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", transition: "background 0.15s", border: "1px solid #ede5da" },
+  wordRow: { background: "#fff", borderRadius: 12, padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", transition: "background 0.15s" },
   wordLeft: { display: "flex", gap: 10, alignItems: "flex-start" },
-  typeDot: { display: "inline-block", padding: "2px 8px", borderRadius: 10, fontSize: 10, color: "#fff", whiteSpace: "nowrap", marginTop: 2 },
   korean: { fontSize: 13, color: "#7a6655", marginTop: 4 },
   example: { fontSize: 12, color: "#b09a88", marginTop: 4, fontFamily: "'Noto Sans JP', sans-serif" },
   wordRight: { display: "flex", alignItems: "center", gap: 4, flexShrink: 0 },
