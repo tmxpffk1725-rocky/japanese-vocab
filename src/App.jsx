@@ -376,7 +376,7 @@ export default function App() {
           <div>
             {/* 진행 상황 */}
             {!sessionDone && card && (
-              <div style={{ background: "#edf7ed", border: "1.5px solid #a8d4a8", borderRadius: 12, padding: "10px 14px", marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ background: "#edf7ed", border: "1.5px solid #a8d4a8", borderRadius: 12, padding: "10px 14px", marginBottom: 8, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div style={{ fontSize: 12, color: "#4a7a4a", fontWeight: 700 }}>📅 오늘의 단어</div>
                 <div style={{ fontSize: 16, color: "#4a7a4a", fontWeight: 700 }}>
                   <span style={{ fontSize: 22 }}>{current}</span>
@@ -385,7 +385,7 @@ export default function App() {
               </div>
             )}
 
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
               <select value={cardMode} onChange={e => setCardMode(e.target.value)} style={styles.select}>
                 <option value="random">랜덤 방향</option>
                 <option value="japanese">일본어 → 한국어</option>
@@ -413,9 +413,9 @@ export default function App() {
               <div>
                 <div style={{ ...styles.flashCard, marginBottom: 16 }}>
                   {card.showKorean ? (
-                    <span style={{ fontSize: 38, fontWeight: 700, color: "#2d1f14", fontFamily: "'Gowun Dodum', sans-serif" }}>{card.korean}</span>
+                    <span style={{ fontSize: 32, fontWeight: 700, color: "#2d1f14", fontFamily: "'Gowun Dodum', sans-serif" }}>{card.korean}</span>
                   ) : (
-                    <RubyText japanese={card.japanese} reading={card.reading} size={38} />
+                    <RubyText japanese={card.japanese} reading={card.reading} size={32} />
                   )}
                   <div style={{ marginTop: 10, color: "#b09a88", fontSize: 12 }}>
                     {card.showKorean ? "한국어 → 일본어" : "일본어 → 한국어"}
@@ -426,7 +426,7 @@ export default function App() {
                   <div style={{ textAlign: "center", padding: 20, color: "#b09a88", fontSize: 14 }}>4지선다는 단어가 4개 이상 필요해요!</div>
                 ) : (
                   <div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 14 }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 7, marginBottom: 10 }}>
                       {choices.map((choice, i) => {
                         const correctAnswer = card.showKorean ? card.japanese : card.korean;
                         const isCorrect = choice === correctAnswer;
@@ -440,7 +440,7 @@ export default function App() {
                         const matchWord = words.find(w => w.japanese === choice);
                         return (
                           <button key={i} className="choice-btn" disabled={answered} onClick={() => handleChoice(choice)}
-                            style={{ width: "100%", padding: "14px 16px", borderRadius: 12, border, background: bg, color, fontSize: 16, textAlign: "left", fontWeight: 500, display: "flex", alignItems: "center", cursor: answered ? "default" : "pointer", transition: "all 0.2s", fontFamily: "'Noto Sans JP', 'Gowun Dodum', sans-serif" }}>
+                            style={{ width: "100%", padding: "10px 14px", borderRadius: 12, border, background: bg, color, fontSize: 15, textAlign: "left", fontWeight: 500, display: "flex", alignItems: "center", cursor: answered ? "default" : "pointer", transition: "all 0.2s", fontFamily: "'Noto Sans JP', 'Gowun Dodum', sans-serif" }}>
                             <span style={{ fontSize: 12, color: answered ? color : "#c4a882", marginRight: 12, minWidth: 20, fontFamily: "'Gowun Dodum', sans-serif", fontWeight: 700 }}>{i + 1}</span>
                             {card.showKorean && matchWord && matchWord.reading
                               ? <RubyText japanese={choice} reading={matchWord.reading} size={16} color={color} />
@@ -503,8 +503,8 @@ const styles = {
   formTitle: { fontSize: 18, color: "#2d1f14", marginBottom: 20, fontWeight: 700 },
   label: { display: "block", fontSize: 12, color: "#8a7060", marginBottom: 6, fontWeight: 700, letterSpacing: 0.5 },
   input: { width: "100%", padding: "11px 14px", border: "1.5px solid #d4c5b5", borderRadius: 10, fontSize: 15, fontFamily: "'Noto Sans JP', 'Gowun Dodum', sans-serif", background: "#faf7f4", color: "#2d1f14", marginBottom: 16 },
-  submitBtn: { width: "100%", padding: "13px", background: "#e8a87c", color: "#fff", border: "none", borderRadius: 12, fontSize: 16, cursor: "pointer", fontWeight: 700, fontFamily: "'Gowun Dodum', sans-serif", transition: "all 0.2s", display: "block" },
+  submitBtn: { width: "100%", padding: "11px", background: "#e8a87c", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, cursor: "pointer", fontWeight: 700, fontFamily: "'Gowun Dodum', sans-serif", transition: "all 0.2s", display: "block" },
   select: { padding: "9px 12px", border: "1.5px solid #d4c5b5", borderRadius: 10, background: "#fff", fontSize: 13, fontFamily: "'Gowun Dodum', sans-serif", color: "#4a3728" },
-  flashCard: { borderRadius: 20, border: "2px solid #d4c5b5", background: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 170, padding: 24, textAlign: "center" },
+  flashCard: { borderRadius: 20, border: "2px solid #d4c5b5", background: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 130, padding: 16, textAlign: "center" },
   toast: { position: "fixed", bottom: 30, left: "50%", transform: "translateX(-50%)", background: "#2d1f14", color: "#e8c89a", padding: "10px 24px", borderRadius: 30, fontSize: 14, zIndex: 999, boxShadow: "0 4px 20px rgba(0,0,0,0.2)" },
 };
