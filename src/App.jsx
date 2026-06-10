@@ -476,7 +476,7 @@ export default function App() {
 
 const styles = {
   container: { fontFamily: "'Gowun Dodum', sans-serif", background: "#f5f0eb", minHeight: "100vh", paddingBottom: 40 },
-  header: { background: "#2d1f14", padding: "20px 20px 16px", color: "#f5f0eb" },
+  header: { background: "#2d1f14", padding: "20px 16px 16px", color: "#f5f0eb" },
   headerInner: { display: "flex", alignItems: "baseline", gap: 10, marginBottom: 10 },
   logo: { fontSize: 28, fontWeight: 700, fontFamily: "'Noto Sans JP', sans-serif", color: "#e8c89a" },
   logoSub: { fontSize: 13, color: "#a08878" },
@@ -485,7 +485,7 @@ const styles = {
   tabs: { display: "flex", background: "#3d2d1e" },
   tab: { flex: 1, padding: "12px 0", border: "none", background: "transparent", color: "#a08878", fontSize: 13, cursor: "pointer", fontFamily: "'Gowun Dodum', sans-serif" },
   tabActive: { background: "#f5f0eb", color: "#4a3728", fontWeight: 700 },
-  content: { padding: 16 },
+  content: { padding: "16px 0" },
   filterRow: { marginBottom: 12 },
   searchInput: { width: "100%", padding: "10px 14px", border: "1.5px solid #d4c5b5", borderRadius: 10, background: "#fff", fontSize: 14, fontFamily: "'Gowun Dodum', sans-serif", marginBottom: 10, color: "#2d1f14" },
   wordList: { display: "flex", flexDirection: "column", gap: 8 },
