@@ -90,6 +90,9 @@ export default function App() {
   const [choices, setChoices] = useState([]);
   const [selected, setSelected] = useState(null);
   const [answered, setAnswered] = useState(false);
+  const [sessionQueue, setSessionQueue] = useState([]);
+  const [cardIndex, setCardIndex] = useState(0);
+  const [sessionDone, setSessionDone] = useState(false);
 
   // 오늘의 단어 목록
   const [dailyWords, setDailyWords] = useState(() => {
@@ -141,19 +144,33 @@ export default function App() {
     return shuffle([answer, ...wrongAnswers]);
   }, [words, dailyWords, dailyOnly]);
 
-  const drawCard = useCallback(() => {
+  const startSession = useCallback(() => {
     const pool = dailyOnly ? dailyWords : words;
     if (pool.length === 0) { setCard(null); return; }
-    const random = pool[Math.floor(Math.random() * pool.length)];
-    const showKorean = cardMode === "random" ? Math.random() > 0.5 : cardMode === "korean";
-    setCard({ ...random, showKorean });
+    const queue = shuffle(pool);
+    setSessionQueue(queue);
+    setCardIndex(0);
+    setSessionDone(false);
+    const first = queue[0];
+    const showKorean = cardMode === "korean";
+    setCard({ ...first, showKorean });
     setSelected(null);
     setAnswered(false);
-    setChoices(makeChoices(random, showKorean));
+    setChoices(makeChoices(first, showKorean));
   }, [words, dailyWords, cardMode, dailyOnly, makeChoices]);
 
+  const drawCard = useCallback((queue, index) => {
+    if (!queue || index >= queue.length) { setSessionDone(true); return; }
+    const word = queue[index];
+    const showKorean = cardMode === "korean";
+    setCard({ ...word, showKorean });
+    setSelected(null);
+    setAnswered(false);
+    setChoices(makeChoices(word, showKorean));
+  }, [cardMode, makeChoices]);
+
   useEffect(() => {
-    if (tab === "flash") drawCard();
+    if (tab === "flash") startSession();
   }, [tab]);
 
   const handleSubmit = () => {
@@ -226,6 +243,8 @@ export default function App() {
 
   const activePool = dailyOnly ? dailyWords : words;
   const noCard = !card || activePool.length === 0;
+  const total = sessionQueue.length;
+  const current = cardIndex + 1;
 
   return (
     <div style={styles.container}>
@@ -353,13 +372,16 @@ export default function App() {
         {/* FLASH */}
         {tab === "flash" && (
           <div>
-            {/* 오늘의 단어 진행 상황 */}
-            <div style={{ background: "#edf7ed", border: "1.5px solid #a8d4a8", borderRadius: 12, padding: "10px 14px", marginBottom: 12 }}>
-              <div style={{ fontSize: 12, color: "#4a7a4a", fontWeight: 700 }}>
-                📅 오늘의 단어 {dailyWords.length}개
-                <span style={{ fontWeight: 400, marginLeft: 6 }}>· {COOLDOWN_DAYS}일 쿨다운</span>
+            {/* 진행 상황 */}
+            {!sessionDone && card && (
+              <div style={{ background: "#edf7ed", border: "1.5px solid #a8d4a8", borderRadius: 12, padding: "10px 14px", marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ fontSize: 12, color: "#4a7a4a", fontWeight: 700 }}>📅 오늘의 단어</div>
+                <div style={{ fontSize: 16, color: "#4a7a4a", fontWeight: 700 }}>
+                  <span style={{ fontSize: 22 }}>{current}</span>
+                  <span style={{ fontSize: 13, fontWeight: 400 }}> / {total}</span>
+                </div>
               </div>
-            </div>
+            )}
 
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
               <select value={cardMode} onChange={e => setCardMode(e.target.value)} style={styles.select}>
@@ -373,11 +395,17 @@ export default function App() {
               </button>
             </div>
 
-            {noCard ? (
+            {sessionDone ? (
+              <div style={styles.empty}>
+                <div style={{ fontSize: 48, marginBottom: 12 }}>🎉</div>
+                <div style={{ color: "#4a7a4a", fontWeight: 700, fontSize: 18, marginBottom: 8 }}>오늘 단어 완료!</div>
+                <div style={{ color: "#9e8878", fontSize: 14, marginBottom: 20 }}>{total}개를 모두 풀었어요</div>
+                <button onClick={startSession} style={{ ...styles.submitBtn, maxWidth: 200 }}>다시 풀기</button>
+              </div>
+            ) : noCard ? (
               <div style={styles.empty}>
                 <div style={{ fontSize: 48, marginBottom: 12 }}>📭</div>
                 <div style={{ color: "#9e8878" }}>단어를 먼저 추가해주세요!</div>
-                <button onClick={drawCard} style={{ ...styles.submitBtn, marginTop: 20, maxWidth: 200 }}>다시 시작</button>
               </div>
             ) : (
               <div>
@@ -429,10 +457,10 @@ export default function App() {
                             <div style={{ fontSize: 13, color: "#6b5744", fontFamily: "'Noto Sans JP', sans-serif" }}>{card.example}</div>
                           </div>
                         )}
-                        <button onClick={drawCard} style={{ ...styles.submitBtn, background: "#4a3728" }}>다음 문제 →</button>
+                        <button onClick={() => { const next = cardIndex + 1; setCardIndex(next); drawCard(sessionQueue, next); }} style={{ ...styles.submitBtn, background: "#4a3728" }}>다음 문제 →</button>
                       </div>
                     )}
-                    {!answered && <button onClick={drawCard} style={{ ...styles.submitBtn, background: "#e0d5cc", color: "#6b5744" }}>건너뛰기</button>}
+                    {!answered && <button onClick={() => { const next = cardIndex + 1; setCardIndex(next); drawCard(sessionQueue, next); }} style={{ ...styles.submitBtn, background: "#e0d5cc", color: "#6b5744" }}>건너뛰기</button>}
                   </div>
                 )}
               </div>
