@@ -18,7 +18,9 @@ function shuffle(arr) {
 }
 
 function getTodayStr() {
-  return new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  return kst.toISOString().slice(0, 10);
 }
 
 // 오늘의 30단어 선택 로직
@@ -485,7 +487,7 @@ const styles = {
   tabs: { display: "flex", background: "#3d2d1e" },
   tab: { flex: 1, padding: "12px 0", border: "none", background: "transparent", color: "#a08878", fontSize: 13, cursor: "pointer", fontFamily: "'Gowun Dodum', sans-serif" },
   tabActive: { background: "#f5f0eb", color: "#4a3728", fontWeight: 700 },
-  content: { padding: "16px 0" },
+  content: { padding: 16 },
   filterRow: { marginBottom: 12 },
   searchInput: { width: "100%", padding: "10px 14px", border: "1.5px solid #d4c5b5", borderRadius: 10, background: "#fff", fontSize: 14, fontFamily: "'Gowun Dodum', sans-serif", marginBottom: 10, color: "#2d1f14" },
   wordList: { display: "flex", flexDirection: "column", gap: 8 },
