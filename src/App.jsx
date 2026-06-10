@@ -83,8 +83,7 @@ export default function App() {
   const [form, setForm] = useState({ japanese: "", reading: "", korean: "", example: "" });
   const [editId, setEditId] = useState(null);
   const [card, setCard] = useState(null);
-  const [cardMode, setCardMode] = useState("random");
-  const [wrongOnly, setWrongOnly] = useState(false);
+  const [cardMode, setCardMode] = useState("japanese");
   const [dailyOnly, setDailyOnly] = useState(true);
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState("");
@@ -143,8 +142,7 @@ export default function App() {
   }, [words, dailyWords, dailyOnly]);
 
   const drawCard = useCallback(() => {
-    const basePool = dailyOnly ? dailyWords : words;
-    const pool = wrongOnly ? basePool.filter(w => w.wrong > 0) : basePool;
+    const pool = dailyOnly ? dailyWords : words;
     if (pool.length === 0) { setCard(null); return; }
     const random = pool[Math.floor(Math.random() * pool.length)];
     const showKorean = cardMode === "random" ? Math.random() > 0.5 : cardMode === "korean";
@@ -152,7 +150,7 @@ export default function App() {
     setSelected(null);
     setAnswered(false);
     setChoices(makeChoices(random, showKorean));
-  }, [words, dailyWords, cardMode, wrongOnly, dailyOnly, makeChoices]);
+  }, [words, dailyWords, cardMode, dailyOnly, makeChoices]);
 
   useEffect(() => {
     if (tab === "flash") drawCard();
@@ -224,15 +222,10 @@ export default function App() {
     const isCorrect = choice === correctAnswer;
     setSelected(choice);
     setAnswered(true);
-    if (isCorrect) {
-      setWords(prev => prev.map(w => w.id === card.id ? { ...w, wrong: Math.max(0, (w.wrong || 0) - 1) } : w));
-    } else {
-      setWords(prev => prev.map(w => w.id === card.id ? { ...w, wrong: (w.wrong || 0) + 1 } : w));
-    }
   };
 
   const activePool = dailyOnly ? dailyWords : words;
-  const noCard = !card || (wrongOnly && activePool.filter(w => w.wrong > 0).length === 0) || activePool.length === 0;
+  const noCard = !card || activePool.length === 0;
 
   return (
     <div style={styles.container}>
@@ -260,9 +253,6 @@ export default function App() {
           <span style={styles.statBadge}>총 {words.length}개</span>
           <span style={{ ...styles.statBadge, background: "#3a5a3a", color: "#a8d4a8" }}>
             오늘 {dailyWords.length}개
-          </span>
-          <span style={{ ...styles.statBadge, background: "#ffe0cc", color: "#c0622a" }}>
-            틀린 {words.filter(w => w.wrong > 0).length}개
           </span>
         </div>
       </div>
@@ -322,7 +312,6 @@ export default function App() {
                         </div>
                       </div>
                       <div style={styles.wordRight}>
-                        {w.wrong > 0 && <span style={styles.wrongBadge}>틀림 {w.wrong}</span>}
                         <button onClick={() => handleEdit(w)} style={{ ...styles.iconBtn, color: "#7cb8e8" }}>✏️</button>
                         <button onClick={() => handleDelete(w.id)} style={{ ...styles.iconBtn, color: "#e87c7c" }}>🗑️</button>
                       </div>
@@ -382,16 +371,12 @@ export default function App() {
                 style={{ ...styles.select, cursor: "pointer", background: dailyOnly ? "#7cc87c" : "#fff", color: dailyOnly ? "#fff" : "#6b5744", border: `1.5px solid #7cc87c`, fontWeight: dailyOnly ? 700 : 400 }}>
                 {dailyOnly ? "✓ 오늘 단어만" : "오늘 단어만"}
               </button>
-              <button onClick={() => setWrongOnly(p => !p)}
-                style={{ ...styles.select, cursor: "pointer", background: wrongOnly ? "#e8a87c" : "#fff", color: wrongOnly ? "#fff" : "#6b5744", border: `1.5px solid #e8a87c`, fontWeight: wrongOnly ? 700 : 400 }}>
-                {wrongOnly ? "✓ 틀린 단어만" : "틀린 단어만"}
-              </button>
             </div>
 
             {noCard ? (
               <div style={styles.empty}>
-                <div style={{ fontSize: 48, marginBottom: 12 }}>{wrongOnly ? "🎉" : "📭"}</div>
-                <div style={{ color: "#9e8878" }}>{wrongOnly ? "틀린 단어가 없어요!" : "단어를 먼저 추가해주세요!"}</div>
+                <div style={{ fontSize: 48, marginBottom: 12 }}>📭</div>
+                <div style={{ color: "#9e8878" }}>단어를 먼저 추가해주세요!</div>
                 <button onClick={drawCard} style={{ ...styles.submitBtn, marginTop: 20, maxWidth: 200 }}>다시 시작</button>
               </div>
             ) : (
