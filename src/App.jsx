@@ -475,7 +475,7 @@ export default function App() {
 }
 
 const styles = {
-  container: { fontFamily: "'Gowun Dodum', sans-serif", background: "#f5f0eb", minHeight: "100vh", maxWidth: 480, margin: "0 auto", paddingBottom: 40 },
+  container: { fontFamily: "'Gowun Dodum', sans-serif", background: "#f5f0eb", minHeight: "100vh", paddingBottom: 40 },
   header: { background: "#2d1f14", padding: "20px 20px 16px", color: "#f5f0eb" },
   headerInner: { display: "flex", alignItems: "baseline", gap: 10, marginBottom: 10 },
   logo: { fontSize: 28, fontWeight: 700, fontFamily: "'Noto Sans JP', sans-serif", color: "#e8c89a" },
