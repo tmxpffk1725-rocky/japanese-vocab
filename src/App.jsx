@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 
 const STORAGE_KEY = "jp_vocab_words";
-const DAILY_KEY = "jp_vocab_daily";
+const DAILY_KEY_PREFIX = "jp_vocab_daily";
+const getDailyKey = (level) => level ? `${DAILY_KEY_PREFIX}_${level}` : DAILY_KEY_PREFIX;
 const COOLDOWN_DAYS = 4;
 const DAILY_COUNT = 30;
 
@@ -65,12 +66,7 @@ export default function App() {
     } catch { return sampleWords; }
   });
 
-  const [daily, setDaily] = useState(() => {
-    try {
-      const saved = localStorage.getItem(DAILY_KEY);
-      return saved ? JSON.parse(saved) : null;
-    } catch { return null; }
-  });
+  const [dailyMap, setDailyMap] = useState({});
 
   const [tab, setTab] = useState("list");
   const [form, setForm] = useState({ japanese: "", reading: "", korean: "", example: "" });
@@ -88,7 +84,8 @@ export default function App() {
   const [sessionDone, setSessionDone] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState(null); // null = 급수 선택 화면
 
-  const [dailyWords, setDailyWords] = useState(() => {
+  // dailyWords replaced by dailyWordsMap
+  const [_unused, _setUnused] = useState(() => {
     try {
       const savedDaily = localStorage.getItem(DAILY_KEY);
       const parsedDaily = savedDaily ? JSON.parse(savedDaily) : null;
@@ -104,16 +101,43 @@ export default function App() {
 
   useEffect(() => {
     const today = getTodayStr();
-    const usedDates = daily?.usedDates || {};
-    if (!daily || daily.date !== today) {
-      const newDailyWords = getDailyWords(words, daily);
+    const levels = ["전체", "N5", "N4", "N3", "N2", "N1"];
+    const newMap = {};
+    const newWordsMap = {};
+
+    levels.forEach(lv => {
+      const key = getDailyKey(lv);
+      let saved = null;
+      try { const s = localStorage.getItem(key); saved = s ? JSON.parse(s) : null; } catch {}
+
+      const pool = lv === "전체" ? words : words.filter(w => w.level === lv);
+      if (pool.length === 0) return;
+
+      if (saved && saved.date === today && saved.wordIds) {
+        const todayWords = saved.wordIds.map(id => words.find(w => w.id === id)).filter(Boolean);
+        if (todayWords.length > 0) {
+          newMap[lv] = saved;
+          newWordsMap[lv] = todayWords;
+          return;
+        }
+      }
+
+      const usedDates = saved?.usedDates || {};
+      const cooldownDate = new Date();
+      cooldownDate.setDate(cooldownDate.getDate() - COOLDOWN_DAYS);
+      const cooldownStr = cooldownDate.toISOString().slice(0, 10);
+      const available = pool.filter(w => { const lu = usedDates[w.id]; return !lu || lu <= cooldownStr; });
+      const selected = shuffle(available.length >= DAILY_COUNT ? available : pool).slice(0, Math.min(DAILY_COUNT, pool.length));
       const newUsedDates = { ...usedDates };
-      newDailyWords.forEach(w => { newUsedDates[w.id] = today; });
-      const newDaily = { date: today, wordIds: newDailyWords.map(w => w.id), usedDates: newUsedDates };
-      setDaily(newDaily);
-      setDailyWords(newDailyWords);
-      try { localStorage.setItem(DAILY_KEY, JSON.stringify(newDaily)); } catch {}
-    }
+      selected.forEach(w => { newUsedDates[w.id] = today; });
+      const newDaily = { date: today, wordIds: selected.map(w => w.id), usedDates: newUsedDates };
+      newMap[lv] = newDaily;
+      newWordsMap[lv] = selected;
+      try { localStorage.setItem(key, JSON.stringify(newDaily)); } catch {}
+    });
+
+    setDailyMap(newMap);
+    setDailyWordsMap(newWordsMap);
   }, [words]);
 
   // 탭 전환 시 급수 선택 화면으로 초기화
@@ -136,11 +160,9 @@ export default function App() {
     return words.filter(w => w.level === level);
   }, [words]);
 
-  // 급수별 오늘 단어 (dailyOnly가 켜져있을 때)
   const getLevelDailyWords = useCallback((level) => {
-    if (level === "전체") return dailyWords;
-    return dailyWords.filter(w => w.level === level);
-  }, [dailyWords]);
+    return dailyWordsMap[level] || [];
+  }, [dailyWordsMap]);
 
   const makeChoices = useCallback((correctWord, showKorean, pool) => {
     const others = pool.filter(w => w.id !== correctWord.id);
@@ -164,7 +186,7 @@ export default function App() {
     setSelected(null);
     setAnswered(false);
     setChoices(makeChoices(first, showKorean, queue));
-  }, [words, dailyWords, cardMode, dailyOnly, getLevelPool, getLevelDailyWords, makeChoices]);
+  }, [words, dailyWordsMap, cardMode, dailyOnly, getLevelPool, getLevelDailyWords, makeChoices]);
 
   const drawCard = useCallback((queue, index) => {
     if (!queue || index >= queue.length) { setSessionDone(true); return; }
@@ -296,7 +318,7 @@ export default function App() {
         <div style={styles.stats}>
           <span style={styles.statBadge}>총 {words.length}개</span>
           <span style={{ ...styles.statBadge, background: "#3a5a3a", color: "#a8d4a8" }}>
-            오늘 {dailyWords.length}개
+            오늘 {Object.values(dailyWordsMap).reduce((acc, arr) => acc + arr.length, 0)}개
           </span>
         </div>
       </div>
@@ -331,7 +353,7 @@ export default function App() {
             <div style={{ background: "#edf7ed", border: "1.5px solid #a8d4a8", borderRadius: 12, padding: "12px 16px", marginBottom: 12 }}>
               <div style={{ fontSize: 12, color: "#4a7a4a", fontWeight: 700, marginBottom: 4 }}>📅 오늘의 단어 ({getTodayStr()})</div>
               <div style={{ fontSize: 13, color: "#4a7a4a" }}>
-                {dailyWords.length}개 선택됨 · 같은 단어는 {COOLDOWN_DAYS}일 안에 다시 안 나와요
+                급수별 각 {DAILY_COUNT}개 선택됨 · 같은 단어는 {COOLDOWN_DAYS}일 안에 다시 안 나와요
               </div>
             </div>
             {filtered.length === 0 ? (
@@ -339,7 +361,7 @@ export default function App() {
             ) : (
               <div style={styles.wordList}>
                 {filtered.map(w => {
-                  const isToday = dailyWords.some(d => d.id === w.id);
+                  const isToday = Object.values(dailyWordsMap).some(arr => arr.some(d => d.id === w.id));
                   return (
                     <div key={w.id} className="word-row" style={{ ...styles.wordRow, borderLeft: isToday ? "3px solid #7cc87c" : "1px solid #ede5da" }}>
                       <div style={styles.wordLeft}>
