@@ -5,6 +5,8 @@ const DAILY_KEY = "jp_vocab_daily";
 const COOLDOWN_DAYS = 4;
 const DAILY_COUNT = 30;
 
+const LEVELS = ["전체", "N5", "N4", "N3", "N2", "N1"];
+
 const sampleWords = [
   { id: 1, japanese: "勉強", reading: "べんきょう", korean: "공부", example: "毎日勉強しています。", wrong: 0 },
   { id: 2, japanese: "食べる", reading: "たべる", korean: "먹다", example: "ご飯を食べる。", wrong: 0 },
@@ -23,35 +25,24 @@ function getTodayStr() {
   return kst.toISOString().slice(0, 10);
 }
 
-// 오늘의 30단어 선택 로직
-// daily 구조: { date: "2026-06-10", wordIds: [1,2,...], usedDates: { wordId: "2026-06-08", ... } }
 function getDailyWords(words, savedDaily) {
   const today = getTodayStr();
-
-  // 오늘 이미 선택된 단어가 있으면 그대로 사용
   if (savedDaily && savedDaily.date === today && savedDaily.wordIds) {
     const todayWords = savedDaily.wordIds
       .map(id => words.find(w => w.id === id))
       .filter(Boolean);
     if (todayWords.length > 0) return todayWords;
   }
-
-  // 쿨다운 계산: 최근 COOLDOWN_DAYS일 안에 나온 단어 제외
   const usedDates = savedDaily?.usedDates || {};
   const cooldownDate = new Date();
   cooldownDate.setDate(cooldownDate.getDate() - COOLDOWN_DAYS);
   const cooldownStr = cooldownDate.toISOString().slice(0, 10);
-
   const available = words.filter(w => {
     const lastUsed = usedDates[w.id];
     return !lastUsed || lastUsed <= cooldownStr;
   });
-
-  // 사용 가능한 단어가 30개 미만이면 쿨다운 무시하고 전체에서 선택
   const pool = available.length >= DAILY_COUNT ? available : words;
-  const selected = shuffle(pool).slice(0, Math.min(DAILY_COUNT, pool.length));
-
-  return selected;
+  return shuffle(pool).slice(0, Math.min(DAILY_COUNT, pool.length));
 }
 
 function RubyText({ japanese, reading, size = 32, color = "#2d1f14" }) {
@@ -95,8 +86,8 @@ export default function App() {
   const [sessionQueue, setSessionQueue] = useState([]);
   const [cardIndex, setCardIndex] = useState(0);
   const [sessionDone, setSessionDone] = useState(false);
+  const [selectedLevel, setSelectedLevel] = useState(null); // null = 급수 선택 화면
 
-  // 오늘의 단어 목록
   const [dailyWords, setDailyWords] = useState(() => {
     try {
       const savedDaily = localStorage.getItem(DAILY_KEY);
@@ -111,12 +102,9 @@ export default function App() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(words)); } catch {}
   }, [words]);
 
-  // daily 상태 저장 및 오늘 단어 갱신
   useEffect(() => {
     const today = getTodayStr();
     const usedDates = daily?.usedDates || {};
-
-    // 날짜가 바뀌었거나 처음이면 새로 선택
     if (!daily || daily.date !== today) {
       const newDailyWords = getDailyWords(words, daily);
       const newUsedDates = { ...usedDates };
@@ -128,28 +116,45 @@ export default function App() {
     }
   }, [words]);
 
+  // 탭 전환 시 급수 선택 화면으로 초기화
+  useEffect(() => {
+    if (tab === "flash") setSelectedLevel(null);
+  }, [tab]);
+
   const showToast = (msg) => {
     setToast(msg);
     setTimeout(() => setToast(""), 2000);
   };
 
-  const filtered = words.filter(w => {
-    return w.japanese.includes(search) || w.korean.includes(search) || (w.reading && w.reading.includes(search));
-  });
+  const filtered = words.filter(w =>
+    w.japanese.includes(search) || w.korean.includes(search) || (w.reading && w.reading.includes(search))
+  );
 
-  const makeChoices = useCallback((correctWord, showKorean) => {
-    const pool = dailyOnly ? dailyWords : words;
+  // 급수별 단어 풀
+  const getLevelPool = useCallback((level) => {
+    if (level === "전체") return words;
+    return words.filter(w => w.level === level);
+  }, [words]);
+
+  // 급수별 오늘 단어 (dailyOnly가 켜져있을 때)
+  const getLevelDailyWords = useCallback((level) => {
+    if (level === "전체") return dailyWords;
+    return dailyWords.filter(w => w.level === level);
+  }, [dailyWords]);
+
+  const makeChoices = useCallback((correctWord, showKorean, pool) => {
     const others = pool.filter(w => w.id !== correctWord.id);
-    const wrong3 = shuffle(others.length >= 3 ? others : words.filter(w => w.id !== correctWord.id)).slice(0, 3);
+    const fallback = words.filter(w => w.id !== correctWord.id);
+    const wrong3 = shuffle(others.length >= 3 ? others : fallback).slice(0, 3);
     const answer = showKorean ? correctWord.japanese : correctWord.korean;
     const wrongAnswers = wrong3.map(w => showKorean ? w.japanese : w.korean);
     return shuffle([answer, ...wrongAnswers]);
-  }, [words, dailyWords, dailyOnly]);
+  }, [words]);
 
-  const startSession = useCallback(() => {
-    const pool = dailyOnly ? dailyWords : words;
-    if (pool.length === 0) { setCard(null); return; }
-    const queue = shuffle(pool);
+  const startSession = useCallback((level) => {
+    const basePool = dailyOnly ? getLevelDailyWords(level) : getLevelPool(level);
+    if (basePool.length === 0) { setCard(null); return; }
+    const queue = shuffle(basePool);
     setSessionQueue(queue);
     setCardIndex(0);
     setSessionDone(false);
@@ -158,8 +163,8 @@ export default function App() {
     setCard({ ...first, showKorean });
     setSelected(null);
     setAnswered(false);
-    setChoices(makeChoices(first, showKorean));
-  }, [words, dailyWords, cardMode, dailyOnly, makeChoices]);
+    setChoices(makeChoices(first, showKorean, queue));
+  }, [words, dailyWords, cardMode, dailyOnly, getLevelPool, getLevelDailyWords, makeChoices]);
 
   const drawCard = useCallback((queue, index) => {
     if (!queue || index >= queue.length) { setSessionDone(true); return; }
@@ -168,12 +173,14 @@ export default function App() {
     setCard({ ...word, showKorean });
     setSelected(null);
     setAnswered(false);
-    setChoices(makeChoices(word, showKorean));
+    setChoices(makeChoices(word, showKorean, queue));
   }, [cardMode, makeChoices]);
 
-  useEffect(() => {
-    if (tab === "flash") startSession();
-  }, [tab]);
+  const handleSelectLevel = (level) => {
+    setSelectedLevel(level);
+    setDailyOnly(true);
+    startSession(level);
+  };
 
   const handleSubmit = () => {
     if (!form.japanese.trim() || !form.korean.trim()) { showToast("단어와 뜻을 입력해주세요!"); return; }
@@ -237,16 +244,31 @@ export default function App() {
 
   const handleChoice = (choice) => {
     if (answered) return;
-    const correctAnswer = card.showKorean ? card.japanese : card.korean;
-    const isCorrect = choice === correctAnswer;
     setSelected(choice);
     setAnswered(true);
   };
 
-  const activePool = dailyOnly ? dailyWords : words;
+  const activePool = selectedLevel
+    ? (dailyOnly ? getLevelDailyWords(selectedLevel) : getLevelPool(selectedLevel))
+    : [];
   const noCard = !card || activePool.length === 0;
   const total = sessionQueue.length;
   const current = cardIndex + 1;
+
+  // 급수별 단어 수 계산
+  const levelCounts = LEVELS.reduce((acc, lv) => {
+    acc[lv] = lv === "전체" ? words.length : words.filter(w => w.level === lv).length;
+    return acc;
+  }, {});
+
+  const levelColors = {
+    "전체": { bg: "#3d2d1e", color: "#e8c89a", border: "#5a4030" },
+    "N5": { bg: "#edf7ed", color: "#2a6e2a", border: "#7cc87c" },
+    "N4": { bg: "#e8f4ff", color: "#2a5a8e", border: "#7cb8e8" },
+    "N3": { bg: "#fff8e8", color: "#8e6a2a", border: "#e8c87c" },
+    "N2": { bg: "#f8e8ff", color: "#6a2a8e", border: "#c87ce8" },
+    "N1": { bg: "#ffe8e8", color: "#8e2a2a", border: "#e87c7c" },
+  };
 
   return (
     <div style={styles.container}>
@@ -258,6 +280,7 @@ export default function App() {
         .btn-hover:hover { opacity: 0.85; transform: translateY(-1px); }
         .tab-btn { transition: all 0.2s; }
         .choice-btn:hover:not([disabled]) { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .level-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
         input:focus, select:focus, textarea:focus { outline: 2px solid #e8a87c; outline-offset: 1px; }
         ruby { display: inline-flex; flex-direction: column-reverse; align-items: center; vertical-align: bottom; }
         rt { display: block; text-align: center; line-height: 1.2; }
@@ -305,15 +328,12 @@ export default function App() {
                 <input type="file" accept=".json" onChange={handleImport} style={{ display: "none" }} />
               </label>
             </div>
-
-            {/* 오늘의 단어 배너 */}
             <div style={{ background: "#edf7ed", border: "1.5px solid #a8d4a8", borderRadius: 12, padding: "12px 16px", marginBottom: 12 }}>
               <div style={{ fontSize: 12, color: "#4a7a4a", fontWeight: 700, marginBottom: 4 }}>📅 오늘의 단어 ({getTodayStr()})</div>
               <div style={{ fontSize: 13, color: "#4a7a4a" }}>
                 {dailyWords.length}개 선택됨 · 같은 단어는 {COOLDOWN_DAYS}일 안에 다시 안 나와요
               </div>
             </div>
-
             {filtered.length === 0 ? (
               <div style={styles.empty}><div style={{ fontSize: 48, marginBottom: 12 }}>📭</div><div style={{ color: "#9e8878" }}>단어가 없어요!</div></div>
             ) : (
@@ -327,6 +347,7 @@ export default function App() {
                           <div style={{ marginBottom: 2, display: "flex", alignItems: "center", gap: 6 }}>
                             <RubyText japanese={w.japanese} reading={w.reading} size={18} />
                             {isToday && <span style={{ fontSize: 10, background: "#edf7ed", color: "#4a7a4a", padding: "1px 6px", borderRadius: 8, fontWeight: 700 }}>오늘</span>}
+                            {w.level && <span style={{ fontSize: 10, background: levelColors[w.level]?.bg || "#f5f0eb", color: levelColors[w.level]?.color || "#6b5744", padding: "1px 6px", borderRadius: 8, fontWeight: 700, border: `1px solid ${levelColors[w.level]?.border || "#d4c5b5"}` }}>{w.level}</span>}
                           </div>
                           <div style={styles.korean}>{w.korean}</div>
                           {w.example && <div style={styles.example}>{w.example}</div>}
@@ -374,95 +395,128 @@ export default function App() {
         {/* FLASH */}
         {tab === "flash" && (
           <div>
-            {/* 진행 상황 */}
-            {!sessionDone && card && (
-              <div style={{ background: "#edf7ed", border: "1.5px solid #a8d4a8", borderRadius: 12, padding: "10px 14px", marginBottom: 8, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div style={{ fontSize: 12, color: "#4a7a4a", fontWeight: 700 }}>📅 오늘의 단어</div>
-                <div style={{ fontSize: 16, color: "#4a7a4a", fontWeight: 700 }}>
-                  <span style={{ fontSize: 22 }}>{current}</span>
-                  <span style={{ fontSize: 13, fontWeight: 400 }}> / {total}</span>
+            {/* 급수 선택 화면 */}
+            {!selectedLevel ? (
+              <div>
+                <div style={{ textAlign: "center", marginBottom: 24 }}>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: "#2d1f14", marginBottom: 6 }}>급수 선택</div>
+                  <div style={{ fontSize: 13, color: "#9e8878" }}>공부할 단어 급수를 선택해주세요</div>
                 </div>
-              </div>
-            )}
-
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
-              <select value={cardMode} onChange={e => setCardMode(e.target.value)} style={styles.select}>
-                <option value="random">랜덤 방향</option>
-                <option value="japanese">일본어 → 한국어</option>
-                <option value="korean">한국어 → 일본어</option>
-              </select>
-              <button onClick={() => { setDailyOnly(p => !p); }}
-                style={{ ...styles.select, cursor: "pointer", background: dailyOnly ? "#7cc87c" : "#fff", color: dailyOnly ? "#fff" : "#6b5744", border: `1.5px solid #7cc87c`, fontWeight: dailyOnly ? 700 : 400 }}>
-                {dailyOnly ? "✓ 오늘 단어만" : "오늘 단어만"}
-              </button>
-            </div>
-
-            {sessionDone ? (
-              <div style={styles.empty}>
-                <div style={{ fontSize: 48, marginBottom: 12 }}>🎉</div>
-                <div style={{ color: "#4a7a4a", fontWeight: 700, fontSize: 18, marginBottom: 8 }}>오늘 단어 완료!</div>
-                <div style={{ color: "#9e8878", fontSize: 14, marginBottom: 20 }}>{total}개를 모두 풀었어요</div>
-                <button onClick={startSession} style={{ ...styles.submitBtn, maxWidth: 200 }}>다시 풀기</button>
-              </div>
-            ) : noCard ? (
-              <div style={styles.empty}>
-                <div style={{ fontSize: 48, marginBottom: 12 }}>📭</div>
-                <div style={{ color: "#9e8878" }}>단어를 먼저 추가해주세요!</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {LEVELS.filter(lv => levelCounts[lv] > 0).map(lv => {
+                    const c = levelColors[lv];
+                    return (
+                      <button key={lv} className="level-btn" onClick={() => handleSelectLevel(lv)}
+                        style={{ width: "100%", padding: "18px 20px", borderRadius: 16, border: `2px solid ${c.border}`, background: c.bg, color: c.color, fontSize: 18, fontWeight: 700, cursor: "pointer", fontFamily: "'Gowun Dodum', sans-serif", display: "flex", justifyContent: "space-between", alignItems: "center", transition: "all 0.2s" }}>
+                        <span>{lv}</span>
+                        <span style={{ fontSize: 13, fontWeight: 400, opacity: 0.8 }}>{levelCounts[lv]}개</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             ) : (
+              /* 플래시카드 화면 */
               <div>
-                <div style={{ ...styles.flashCard, marginBottom: 16 }}>
-                  {card.showKorean ? (
-                    <span style={{ fontSize: 32, fontWeight: 700, color: "#2d1f14", fontFamily: "'Gowun Dodum', sans-serif" }}>{card.korean}</span>
-                  ) : (
-                    <RubyText japanese={card.japanese} reading={card.reading} size={32} />
+                {/* 뒤로가기 + 진행 상황 */}
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                  <button onClick={() => setSelectedLevel(null)}
+                    style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20, padding: "4px 8px", color: "#6b5744" }}>←</button>
+                  {!sessionDone && card && (
+                    <div style={{ flex: 1, background: "#edf7ed", border: "1.5px solid #a8d4a8", borderRadius: 12, padding: "8px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div style={{ fontSize: 12, color: "#4a7a4a", fontWeight: 700 }}>
+                        {selectedLevel === "전체" ? "전체" : selectedLevel}
+                      </div>
+                      <div style={{ fontSize: 16, color: "#4a7a4a", fontWeight: 700 }}>
+                        <span style={{ fontSize: 22 }}>{current}</span>
+                        <span style={{ fontSize: 13, fontWeight: 400 }}> / {total}</span>
+                      </div>
+                    </div>
                   )}
-                  <div style={{ marginTop: 10, color: "#b09a88", fontSize: 12 }}>
-                    {card.showKorean ? "한국어 → 일본어" : "일본어 → 한국어"}
-                  </div>
                 </div>
 
-                {activePool.length < 4 ? (
-                  <div style={{ textAlign: "center", padding: 20, color: "#b09a88", fontSize: 14 }}>4지선다는 단어가 4개 이상 필요해요!</div>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+                  <select value={cardMode} onChange={e => setCardMode(e.target.value)} style={styles.select}>
+                    <option value="random">랜덤 방향</option>
+                    <option value="japanese">일본어 → 한국어</option>
+                    <option value="korean">한국어 → 일본어</option>
+                  </select>
+                  <button onClick={() => { setDailyOnly(p => !p); startSession(selectedLevel); }}
+                    style={{ ...styles.select, cursor: "pointer", background: dailyOnly ? "#7cc87c" : "#fff", color: dailyOnly ? "#fff" : "#6b5744", border: `1.5px solid #7cc87c`, fontWeight: dailyOnly ? 700 : 400 }}>
+                    {dailyOnly ? "✓ 오늘 단어만" : "오늘 단어만"}
+                  </button>
+                </div>
+
+                {sessionDone ? (
+                  <div style={styles.empty}>
+                    <div style={{ fontSize: 48, marginBottom: 12 }}>🎉</div>
+                    <div style={{ color: "#4a7a4a", fontWeight: 700, fontSize: 18, marginBottom: 8 }}>완료!</div>
+                    <div style={{ color: "#9e8878", fontSize: 14, marginBottom: 20 }}>{total}개를 모두 풀었어요</div>
+                    <button onClick={() => startSession(selectedLevel)} style={{ ...styles.submitBtn, maxWidth: 200, marginBottom: 10 }}>다시 풀기</button>
+                    <button onClick={() => setSelectedLevel(null)} style={{ ...styles.submitBtn, maxWidth: 200, background: "#e0d5cc", color: "#6b5744" }}>급수 변경</button>
+                  </div>
+                ) : noCard ? (
+                  <div style={styles.empty}>
+                    <div style={{ fontSize: 48, marginBottom: 12 }}>📭</div>
+                    <div style={{ color: "#9e8878", marginBottom: 16 }}>단어가 없어요!</div>
+                    <button onClick={() => setSelectedLevel(null)} style={{ ...styles.submitBtn, maxWidth: 200, background: "#e0d5cc", color: "#6b5744" }}>급수 변경</button>
+                  </div>
                 ) : (
                   <div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 7, marginBottom: 10 }}>
-                      {choices.map((choice, i) => {
-                        const correctAnswer = card.showKorean ? card.japanese : card.korean;
-                        const isCorrect = choice === correctAnswer;
-                        const isSelected = choice === selected;
-                        let bg = "#fff", color = "#2d1f14", border = "1.5px solid #d4c5b5", icon = "";
-                        if (answered) {
-                          if (isCorrect) { bg = "#edfaed"; color = "#2a6e2a"; border = "2px solid #7cc87c"; icon = " ✓"; }
-                          else if (isSelected) { bg = "#faeeed"; color = "#7a2d2d"; border = "2px solid #e87c7c"; icon = " ✗"; }
-                          else { bg = "#f5f0eb"; color = "#b09a88"; border = "1.5px solid #e0d5cc"; }
-                        }
-                        const matchWord = words.find(w => w.japanese === choice);
-                        return (
-                          <button key={i} className="choice-btn" disabled={answered} onClick={() => handleChoice(choice)}
-                            style={{ width: "100%", padding: "10px 14px", borderRadius: 12, border, background: bg, color, fontSize: 15, textAlign: "left", fontWeight: 500, display: "flex", alignItems: "center", cursor: answered ? "default" : "pointer", transition: "all 0.2s", fontFamily: "'Noto Sans JP', 'Gowun Dodum', sans-serif" }}>
-                            <span style={{ fontSize: 12, color: answered ? color : "#c4a882", marginRight: 12, minWidth: 20, fontFamily: "'Gowun Dodum', sans-serif", fontWeight: 700 }}>{i + 1}</span>
-                            {card.showKorean && matchWord && matchWord.reading
-                              ? <RubyText japanese={choice} reading={matchWord.reading} size={16} color={color} />
-                              : <span>{choice}</span>
-                            }
-                            {icon}
-                          </button>
-                        );
-                      })}
+                    <div style={{ ...styles.flashCard, marginBottom: 16 }}>
+                      {card.showKorean ? (
+                        <span style={{ fontSize: 32, fontWeight: 700, color: "#2d1f14", fontFamily: "'Gowun Dodum', sans-serif" }}>{card.korean}</span>
+                      ) : (
+                        <RubyText japanese={card.japanese} reading={card.reading} size={32} />
+                      )}
+                      <div style={{ marginTop: 10, color: "#b09a88", fontSize: 12 }}>
+                        {card.showKorean ? "한국어 → 일본어" : "일본어 → 한국어"}
+                      </div>
                     </div>
-                    {answered && (
+
+                    {activePool.length < 4 ? (
+                      <div style={{ textAlign: "center", padding: 20, color: "#b09a88", fontSize: 14 }}>4지선다는 단어가 4개 이상 필요해요!</div>
+                    ) : (
                       <div>
-                        {card.example && (
-                          <div style={{ background: "#fff", borderRadius: 12, padding: "12px 16px", marginBottom: 12, border: "1px solid #ede5da" }}>
-                            <div style={{ fontSize: 11, color: "#b09a88", marginBottom: 4 }}>예문</div>
-                            <div style={{ fontSize: 13, color: "#6b5744", fontFamily: "'Noto Sans JP', sans-serif" }}>{card.example}</div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 7, marginBottom: 10 }}>
+                          {choices.map((choice, i) => {
+                            const correctAnswer = card.showKorean ? card.japanese : card.korean;
+                            const isCorrect = choice === correctAnswer;
+                            const isSelected = choice === selected;
+                            let bg = "#fff", color = "#2d1f14", border = "1.5px solid #d4c5b5", icon = "";
+                            if (answered) {
+                              if (isCorrect) { bg = "#edfaed"; color = "#2a6e2a"; border = "2px solid #7cc87c"; icon = " ✓"; }
+                              else if (isSelected) { bg = "#faeeed"; color = "#7a2d2d"; border = "2px solid #e87c7c"; icon = " ✗"; }
+                              else { bg = "#f5f0eb"; color = "#b09a88"; border = "1.5px solid #e0d5cc"; }
+                            }
+                            const matchWord = words.find(w => w.japanese === choice);
+                            return (
+                              <button key={i} className="choice-btn" disabled={answered} onClick={() => handleChoice(choice)}
+                                style={{ width: "100%", padding: "10px 14px", borderRadius: 12, border, background: bg, color, fontSize: 15, textAlign: "left", fontWeight: 500, display: "flex", alignItems: "center", cursor: answered ? "default" : "pointer", transition: "all 0.2s", fontFamily: "'Noto Sans JP', 'Gowun Dodum', sans-serif" }}>
+                                <span style={{ fontSize: 12, color: answered ? color : "#c4a882", marginRight: 12, minWidth: 20, fontFamily: "'Gowun Dodum', sans-serif", fontWeight: 700 }}>{i + 1}</span>
+                                {card.showKorean && matchWord && matchWord.reading
+                                  ? <RubyText japanese={choice} reading={matchWord.reading} size={16} color={color} />
+                                  : <span>{choice}</span>
+                                }
+                                {icon}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {answered && (
+                          <div>
+                            {card.example && (
+                              <div style={{ background: "#fff", borderRadius: 12, padding: "12px 16px", marginBottom: 12, border: "1px solid #ede5da" }}>
+                                <div style={{ fontSize: 11, color: "#b09a88", marginBottom: 4 }}>예문</div>
+                                <div style={{ fontSize: 13, color: "#6b5744", fontFamily: "'Noto Sans JP', sans-serif" }}>{card.example}</div>
+                              </div>
+                            )}
+                            <button onClick={() => { const next = cardIndex + 1; setCardIndex(next); drawCard(sessionQueue, next); }} style={{ ...styles.submitBtn, background: "#4a3728" }}>다음 문제 →</button>
                           </div>
                         )}
-                        <button onClick={() => { const next = cardIndex + 1; setCardIndex(next); drawCard(sessionQueue, next); }} style={{ ...styles.submitBtn, background: "#4a3728" }}>다음 문제 →</button>
+                        {!answered && <button onClick={() => { const next = cardIndex + 1; setCardIndex(next); drawCard(sessionQueue, next); }} style={{ ...styles.submitBtn, background: "#e0d5cc", color: "#6b5744" }}>건너뛰기</button>}
                       </div>
                     )}
-                    {!answered && <button onClick={() => { const next = cardIndex + 1; setCardIndex(next); drawCard(sessionQueue, next); }} style={{ ...styles.submitBtn, background: "#e0d5cc", color: "#6b5744" }}>건너뛰기</button>}
                   </div>
                 )}
               </div>
@@ -496,7 +550,6 @@ const styles = {
   korean: { fontSize: 13, color: "#7a6655", marginTop: 4 },
   example: { fontSize: 12, color: "#b09a88", marginTop: 4, fontFamily: "'Noto Sans JP', sans-serif" },
   wordRight: { display: "flex", alignItems: "center", gap: 4, flexShrink: 0 },
-  wrongBadge: { background: "#ffe0e0", color: "#c05050", fontSize: 11, padding: "2px 7px", borderRadius: 10 },
   iconBtn: { background: "none", border: "none", cursor: "pointer", fontSize: 15, padding: "4px" },
   empty: { textAlign: "center", padding: "60px 20px", color: "#b09a88" },
   formCard: { background: "#fff", borderRadius: 16, padding: 20, border: "1px solid #ede5da" },
