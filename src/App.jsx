@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 
 const STORAGE_KEY = "jp_vocab_words";
 const DAILY_KEY_PREFIX = "jp_vocab_daily";
-const getDailyKey = (level) => level ? `${DAILY_KEY_PREFIX}_${level}` : DAILY_KEY_PREFIX;
+const getDailyKey = (level) => `${DAILY_KEY_PREFIX}_${level}`;
 const COOLDOWN_DAYS = 4;
 const DAILY_COUNT = 30;
 
@@ -26,26 +26,6 @@ function getTodayStr() {
   return kst.toISOString().slice(0, 10);
 }
 
-function getDailyWords(words, savedDaily) {
-  const today = getTodayStr();
-  if (savedDaily && savedDaily.date === today && savedDaily.wordIds) {
-    const todayWords = savedDaily.wordIds
-      .map(id => words.find(w => w.id === id))
-      .filter(Boolean);
-    if (todayWords.length > 0) return todayWords;
-  }
-  const usedDates = savedDaily?.usedDates || {};
-  const cooldownDate = new Date();
-  cooldownDate.setDate(cooldownDate.getDate() - COOLDOWN_DAYS);
-  const cooldownStr = cooldownDate.toISOString().slice(0, 10);
-  const available = words.filter(w => {
-    const lastUsed = usedDates[w.id];
-    return !lastUsed || lastUsed <= cooldownStr;
-  });
-  const pool = available.length >= DAILY_COUNT ? available : words;
-  return shuffle(pool).slice(0, Math.min(DAILY_COUNT, pool.length));
-}
-
 function RubyText({ japanese, reading, size = 32, color = "#2d1f14" }) {
   if (!reading) {
     return <span style={{ fontSize: size, fontWeight: 700, color, fontFamily: "'Noto Sans JP', sans-serif", letterSpacing: 2 }}>{japanese}</span>;
@@ -66,8 +46,7 @@ export default function App() {
     } catch { return sampleWords; }
   });
 
-  const [dailyMap, setDailyMap] = useState({});
-
+  const [dailyWordsMap, setDailyWordsMap] = useState({});
   const [tab, setTab] = useState("list");
   const [form, setForm] = useState({ japanese: "", reading: "", korean: "", example: "" });
   const [editId, setEditId] = useState(null);
@@ -82,46 +61,35 @@ export default function App() {
   const [sessionQueue, setSessionQueue] = useState([]);
   const [cardIndex, setCardIndex] = useState(0);
   const [sessionDone, setSessionDone] = useState(false);
-  const [selectedLevel, setSelectedLevel] = useState(null); // null = 급수 선택 화면
-
-  // dailyWords replaced by dailyWordsMap
-  const [_unused, _setUnused] = useState(() => {
-    try {
-      const savedDaily = localStorage.getItem(DAILY_KEY);
-      const parsedDaily = savedDaily ? JSON.parse(savedDaily) : null;
-      const savedWords = localStorage.getItem(STORAGE_KEY);
-      const parsedWords = savedWords ? JSON.parse(savedWords) : sampleWords;
-      return getDailyWords(parsedWords, parsedDaily);
-    } catch { return []; }
-  });
+  const [selectedLevel, setSelectedLevel] = useState(null);
 
   useEffect(() => {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(words)); } catch {}
   }, [words]);
 
+  // 급수별 오늘 단어 초기화
   useEffect(() => {
     const today = getTodayStr();
-    const levels = ["전체", "N5", "N4", "N3", "N2", "N1"];
-    const newMap = {};
     const newWordsMap = {};
 
-    levels.forEach(lv => {
+    LEVELS.forEach(lv => {
+      const pool = lv === "전체" ? words : words.filter(w => w.level === lv);
+      if (pool.length === 0) return;
+
       const key = getDailyKey(lv);
       let saved = null;
       try { const s = localStorage.getItem(key); saved = s ? JSON.parse(s) : null; } catch {}
 
-      const pool = lv === "전체" ? words : words.filter(w => w.level === lv);
-      if (pool.length === 0) return;
-
+      // 오늘 이미 선택된 게 있으면 그대로 사용
       if (saved && saved.date === today && saved.wordIds) {
         const todayWords = saved.wordIds.map(id => words.find(w => w.id === id)).filter(Boolean);
         if (todayWords.length > 0) {
-          newMap[lv] = saved;
           newWordsMap[lv] = todayWords;
           return;
         }
       }
 
+      // 새로 선택
       const usedDates = saved?.usedDates || {};
       const cooldownDate = new Date();
       cooldownDate.setDate(cooldownDate.getDate() - COOLDOWN_DAYS);
@@ -131,16 +99,13 @@ export default function App() {
       const newUsedDates = { ...usedDates };
       selected.forEach(w => { newUsedDates[w.id] = today; });
       const newDaily = { date: today, wordIds: selected.map(w => w.id), usedDates: newUsedDates };
-      newMap[lv] = newDaily;
       newWordsMap[lv] = selected;
       try { localStorage.setItem(key, JSON.stringify(newDaily)); } catch {}
     });
 
-    setDailyMap(newMap);
     setDailyWordsMap(newWordsMap);
   }, [words]);
 
-  // 탭 전환 시 급수 선택 화면으로 초기화
   useEffect(() => {
     if (tab === "flash") setSelectedLevel(null);
   }, [tab]);
@@ -154,7 +119,6 @@ export default function App() {
     w.japanese.includes(search) || w.korean.includes(search) || (w.reading && w.reading.includes(search))
   );
 
-  // 급수별 단어 풀
   const getLevelPool = useCallback((level) => {
     if (level === "전체") return words;
     return words.filter(w => w.level === level);
@@ -186,7 +150,7 @@ export default function App() {
     setSelected(null);
     setAnswered(false);
     setChoices(makeChoices(first, showKorean, queue));
-  }, [words, dailyWordsMap, cardMode, dailyOnly, getLevelPool, getLevelDailyWords, makeChoices]);
+  }, [dailyWordsMap, cardMode, dailyOnly, getLevelPool, getLevelDailyWords, makeChoices]);
 
   const drawCard = useCallback((queue, index) => {
     if (!queue || index >= queue.length) { setSessionDone(true); return; }
@@ -277,7 +241,6 @@ export default function App() {
   const total = sessionQueue.length;
   const current = cardIndex + 1;
 
-  // 급수별 단어 수 계산
   const levelCounts = LEVELS.reduce((acc, lv) => {
     acc[lv] = lv === "전체" ? words.length : words.filter(w => w.level === lv).length;
     return acc;
@@ -291,6 +254,8 @@ export default function App() {
     "N2": { bg: "#f8e8ff", color: "#6a2a8e", border: "#c87ce8" },
     "N1": { bg: "#ffe8e8", color: "#8e2a2a", border: "#e87c7c" },
   };
+
+  const totalDailyCount = Object.values(dailyWordsMap).reduce((acc, arr) => acc + arr.length, 0);
 
   return (
     <div style={styles.container}>
@@ -318,7 +283,7 @@ export default function App() {
         <div style={styles.stats}>
           <span style={styles.statBadge}>총 {words.length}개</span>
           <span style={{ ...styles.statBadge, background: "#3a5a3a", color: "#a8d4a8" }}>
-            오늘 {Object.values(dailyWordsMap).reduce((acc, arr) => acc + arr.length, 0)}개
+            오늘 {totalDailyCount}개
           </span>
         </div>
       </div>
@@ -353,7 +318,7 @@ export default function App() {
             <div style={{ background: "#edf7ed", border: "1.5px solid #a8d4a8", borderRadius: 12, padding: "12px 16px", marginBottom: 12 }}>
               <div style={{ fontSize: 12, color: "#4a7a4a", fontWeight: 700, marginBottom: 4 }}>📅 오늘의 단어 ({getTodayStr()})</div>
               <div style={{ fontSize: 13, color: "#4a7a4a" }}>
-                급수별 각 {DAILY_COUNT}개 선택됨 · 같은 단어는 {COOLDOWN_DAYS}일 안에 다시 안 나와요
+                급수별 각 {DAILY_COUNT}개 · 같은 단어는 {COOLDOWN_DAYS}일 안에 다시 안 나와요
               </div>
             </div>
             {filtered.length === 0 ? (
@@ -417,7 +382,6 @@ export default function App() {
         {/* FLASH */}
         {tab === "flash" && (
           <div>
-            {/* 급수 선택 화면 */}
             {!selectedLevel ? (
               <div>
                 <div style={{ textAlign: "center", marginBottom: 24 }}>
@@ -427,28 +391,27 @@ export default function App() {
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   {LEVELS.filter(lv => levelCounts[lv] > 0).map(lv => {
                     const c = levelColors[lv];
+                    const dailyCount = (dailyWordsMap[lv] || []).length;
                     return (
                       <button key={lv} className="level-btn" onClick={() => handleSelectLevel(lv)}
                         style={{ width: "100%", padding: "18px 20px", borderRadius: 16, border: `2px solid ${c.border}`, background: c.bg, color: c.color, fontSize: 18, fontWeight: 700, cursor: "pointer", fontFamily: "'Gowun Dodum', sans-serif", display: "flex", justifyContent: "space-between", alignItems: "center", transition: "all 0.2s" }}>
                         <span>{lv}</span>
-                        <span style={{ fontSize: 13, fontWeight: 400, opacity: 0.8 }}>{levelCounts[lv]}개</span>
+                        <span style={{ fontSize: 13, fontWeight: 400, opacity: 0.8 }}>
+                          오늘 {dailyCount}개 / 전체 {levelCounts[lv]}개
+                        </span>
                       </button>
                     );
                   })}
                 </div>
               </div>
             ) : (
-              /* 플래시카드 화면 */
               <div>
-                {/* 뒤로가기 + 진행 상황 */}
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                   <button onClick={() => setSelectedLevel(null)}
                     style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20, padding: "4px 8px", color: "#6b5744" }}>←</button>
                   {!sessionDone && card && (
                     <div style={{ flex: 1, background: "#edf7ed", border: "1.5px solid #a8d4a8", borderRadius: 12, padding: "8px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div style={{ fontSize: 12, color: "#4a7a4a", fontWeight: 700 }}>
-                        {selectedLevel === "전체" ? "전체" : selectedLevel}
-                      </div>
+                      <div style={{ fontSize: 12, color: "#4a7a4a", fontWeight: 700 }}>{selectedLevel}</div>
                       <div style={{ fontSize: 16, color: "#4a7a4a", fontWeight: 700 }}>
                         <span style={{ fontSize: 22 }}>{current}</span>
                         <span style={{ fontSize: 13, fontWeight: 400 }}> / {total}</span>
