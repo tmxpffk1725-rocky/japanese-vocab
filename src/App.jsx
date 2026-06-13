@@ -48,8 +48,6 @@ export default function App() {
 
   const [dailyWordsMap, setDailyWordsMap] = useState({});
   const [tab, setTab] = useState("list");
-  const [form, setForm] = useState({ japanese: "", reading: "", korean: "", example: "" });
-  const [editId, setEditId] = useState(null);
   const [card, setCard] = useState(null);
   const [cardMode, setCardMode] = useState("japanese");
   const [dailyOnly, setDailyOnly] = useState(true);
@@ -64,7 +62,7 @@ export default function App() {
   const [selectedLevel, setSelectedLevel] = useState(null);
 
   useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(words)); } catch {}
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(words)); } catch { /* 저장소 사용 불가 시 무시 */ }
   }, [words]);
 
   // 급수별 오늘 단어 초기화
@@ -78,7 +76,7 @@ export default function App() {
 
       const key = getDailyKey(lv);
       let saved = null;
-      try { const s = localStorage.getItem(key); saved = s ? JSON.parse(s) : null; } catch {}
+      try { const s = localStorage.getItem(key); saved = s ? JSON.parse(s) : null; } catch { /* 파싱 실패 시 saved=null 유지 */ }
 
       // 오늘 이미 선택된 게 있으면 그대로 사용
       if (saved && saved.date === today && saved.wordIds) {
@@ -100,15 +98,14 @@ export default function App() {
       selected.forEach(w => { newUsedDates[w.id] = today; });
       const newDaily = { date: today, wordIds: selected.map(w => w.id), usedDates: newUsedDates };
       newWordsMap[lv] = selected;
-      try { localStorage.setItem(key, JSON.stringify(newDaily)); } catch {}
+      try { localStorage.setItem(key, JSON.stringify(newDaily)); } catch { /* 저장소 사용 불가 시 무시 */ }
     });
 
+    // words 변경 시 1회 실행되는 초기화 effect (localStorage 영속화 + 랜덤 추첨 포함).
+    // 부수효과가 있어 render 중 계산할 수 없으므로 effect 내 setState가 의도된 동작임.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDailyWordsMap(newWordsMap);
   }, [words]);
-
-  useEffect(() => {
-    if (tab === "flash") setSelectedLevel(null);
-  }, [tab]);
 
   const showToast = (msg) => {
     setToast(msg);
@@ -150,7 +147,7 @@ export default function App() {
     setSelected(null);
     setAnswered(false);
     setChoices(makeChoices(first, showKorean, queue));
-  }, [dailyWordsMap, cardMode, dailyOnly, getLevelPool, getLevelDailyWords, makeChoices]);
+  }, [cardMode, dailyOnly, getLevelPool, getLevelDailyWords, makeChoices]);
 
   const drawCard = useCallback((queue, index) => {
     if (!queue || index >= queue.length) { setSessionDone(true); return; }
@@ -166,25 +163,6 @@ export default function App() {
     setSelectedLevel(level);
     setDailyOnly(true);
     startSession(level);
-  };
-
-  const handleSubmit = () => {
-    if (!form.japanese.trim() || !form.korean.trim()) { showToast("단어와 뜻을 입력해주세요!"); return; }
-    if (editId !== null) {
-      setWords(prev => prev.map(w => w.id === editId ? { ...w, ...form } : w));
-      setEditId(null);
-      showToast("수정됐어요 ✓");
-    } else {
-      setWords(prev => [...prev, { ...form, id: Date.now(), wrong: 0 }]);
-      showToast("저장됐어요 ✓");
-    }
-    setForm({ japanese: "", reading: "", korean: "", example: "" });
-  };
-
-  const handleEdit = (w) => {
-    setForm({ japanese: w.japanese, reading: w.reading || "", korean: w.korean, example: w.example || "" });
-    setEditId(w.id);
-    setTab("add");
   };
 
   const handleDelete = (id) => {
@@ -289,8 +267,8 @@ export default function App() {
       </div>
 
       <div style={styles.tabs}>
-        {[["list", "📚 단어 목록"], ["add", editId ? "✏️ 수정" : "➕ 단어 추가"], ["flash", "🃏 플래시카드"]].map(([key, label]) => (
-          <button key={key} className="tab-btn" onClick={() => { setTab(key); if (key !== "add") { setEditId(null); setForm({ japanese: "", reading: "", korean: "", example: "" }); } }}
+        {[["list", "📚 단어 목록"], ["flash", "🃏 플래시카드"]].map(([key, label]) => (
+          <button key={key} className="tab-btn" onClick={() => { setTab(key); if (key === "flash") setSelectedLevel(null); }}
             style={{ ...styles.tab, ...(tab === key ? styles.tabActive : {}) }}>
             {label}
           </button>
@@ -341,7 +319,6 @@ export default function App() {
                         </div>
                       </div>
                       <div style={styles.wordRight}>
-                        <button onClick={() => handleEdit(w)} style={{ ...styles.iconBtn, color: "#7cb8e8" }}>✏️</button>
                         <button onClick={() => handleDelete(w.id)} style={{ ...styles.iconBtn, color: "#e87c7c" }}>🗑️</button>
                       </div>
                     </div>
@@ -349,33 +326,6 @@ export default function App() {
                 })}
               </div>
             )}
-          </div>
-        )}
-
-        {/* ADD */}
-        {tab === "add" && (
-          <div style={styles.formCard}>
-            <h2 style={styles.formTitle}>{editId ? "단어 수정" : "새 단어 추가"}</h2>
-            <label style={styles.label}>일본어 * <span style={{ color: "#b09a88", fontWeight: 400 }}>(한자, 히라가나, 가타카나 모두 가능)</span></label>
-            <input value={form.japanese} onChange={e => setForm(f => ({ ...f, japanese: e.target.value }))}
-              placeholder="예: 勉強 / ありがとう / コーヒー" style={styles.input} />
-            <label style={styles.label}>히라가나 읽기 <span style={{ color: "#b09a88", fontWeight: 400 }}>(한자인 경우 입력, 히라가나/가타카나는 생략 가능)</span></label>
-            <input value={form.reading} onChange={e => setForm(f => ({ ...f, reading: e.target.value }))}
-              placeholder="예: べんきょう" style={styles.input} />
-            {form.japanese && (
-              <div style={{ background: "#f8f3ff", borderRadius: 12, padding: "14px 16px", marginBottom: 16, textAlign: "center", border: "1.5px solid #d4c0f0" }}>
-                <div style={{ fontSize: 11, color: "#9b7ce8", marginBottom: 8, fontWeight: 700 }}>미리보기</div>
-                <RubyText japanese={form.japanese} reading={form.reading} size={28} />
-              </div>
-            )}
-            <label style={styles.label}>한국어 뜻 *</label>
-            <input value={form.korean} onChange={e => setForm(f => ({ ...f, korean: e.target.value }))}
-              placeholder="예: 공부" style={styles.input} />
-            <label style={styles.label}>예문 (선택)</label>
-            <textarea value={form.example} onChange={e => setForm(f => ({ ...f, example: e.target.value }))}
-              placeholder="예: 毎日勉強しています。" style={{ ...styles.input, height: 72, resize: "none", fontFamily: "'Noto Sans JP', sans-serif" }} />
-            <button className="btn-hover" onClick={handleSubmit} style={styles.submitBtn}>{editId ? "수정 완료" : "저장하기"}</button>
-            {editId && <button onClick={() => { setEditId(null); setForm({ japanese: "", reading: "", korean: "", example: "" }); }} style={{ ...styles.submitBtn, background: "#e0d5cc", color: "#6b5744", marginTop: 8 }}>취소</button>}
           </div>
         )}
 
@@ -537,10 +487,6 @@ const styles = {
   wordRight: { display: "flex", alignItems: "center", gap: 4, flexShrink: 0 },
   iconBtn: { background: "none", border: "none", cursor: "pointer", fontSize: 15, padding: "4px" },
   empty: { textAlign: "center", padding: "60px 20px", color: "#b09a88" },
-  formCard: { background: "#fff", borderRadius: 16, padding: 20, border: "1px solid #ede5da" },
-  formTitle: { fontSize: 18, color: "#2d1f14", marginBottom: 20, fontWeight: 700 },
-  label: { display: "block", fontSize: 12, color: "#8a7060", marginBottom: 6, fontWeight: 700, letterSpacing: 0.5 },
-  input: { width: "100%", padding: "11px 14px", border: "1.5px solid #d4c5b5", borderRadius: 10, fontSize: 15, fontFamily: "'Noto Sans JP', 'Gowun Dodum', sans-serif", background: "#faf7f4", color: "#2d1f14", marginBottom: 16 },
   submitBtn: { width: "100%", padding: "11px", background: "#e8a87c", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, cursor: "pointer", fontWeight: 700, fontFamily: "'Gowun Dodum', sans-serif", transition: "all 0.2s", display: "block" },
   select: { padding: "9px 12px", border: "1.5px solid #d4c5b5", borderRadius: 10, background: "#fff", fontSize: 13, fontFamily: "'Gowun Dodum', sans-serif", color: "#4a3728" },
   flashCard: { borderRadius: 20, border: "2px solid #d4c5b5", background: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 130, padding: 16, textAlign: "center" },
