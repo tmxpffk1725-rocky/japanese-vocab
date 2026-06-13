@@ -105,7 +105,7 @@ export default function App() {
     const text = word.reading || word.japanese;
     const utter = new SpeechSynthesisUtterance(text);
     utter.lang = "ja-JP";
-    utter.rate = 0.9;
+    utter.rate = 1.0;
     window.speechSynthesis.speak(utter);
   };
 
