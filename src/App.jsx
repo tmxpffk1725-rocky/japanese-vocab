@@ -8,14 +8,6 @@ const DAILY_COUNT = 30;
 
 const LEVELS = ["전체", "N5", "N4", "N3", "N2", "N1"];
 
-const sampleWords = [
-  { id: 1, japanese: "勉強", reading: "べんきょう", korean: "공부", example: "毎日勉強しています。", wrong: 0 },
-  { id: 2, japanese: "食べる", reading: "たべる", korean: "먹다", example: "ご飯を食べる。", wrong: 0 },
-  { id: 3, japanese: "ありがとう", reading: "", korean: "감사합니다", example: "ありがとうございます。", wrong: 0 },
-  { id: 4, japanese: "コーヒー", reading: "", korean: "커피", example: "コーヒーを飲みます。", wrong: 0 },
-  { id: 5, japanese: "かわいい", reading: "", korean: "귀엽다", example: "かわいい猫ですね。", wrong: 0 },
-];
-
 function shuffle(arr) {
   return [...arr].sort(() => Math.random() - 0.5);
 }
@@ -42,8 +34,8 @@ export default function App() {
   const [words, setWords] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : sampleWords;
-    } catch { return sampleWords; }
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
   });
 
   const [dailyWordsMap, setDailyWordsMap] = useState({});
