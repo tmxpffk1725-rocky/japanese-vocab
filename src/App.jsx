@@ -99,9 +99,10 @@ export default function App() {
     setDailyWordsMap(newWordsMap);
   }, [words]);
 
-  const speak = (text) => {
+  const speak = (word) => {
     if (!window.speechSynthesis) return;
     window.speechSynthesis.cancel();
+    const text = word.reading || word.japanese;
     const utter = new SpeechSynthesisUtterance(text);
     utter.lang = "ja-JP";
     utter.rate = 0.9;
@@ -320,7 +321,7 @@ export default function App() {
                         </div>
                       </div>
                       <div style={styles.wordRight}>
-                        <button onClick={() => speak(w.japanese)} style={{ ...styles.iconBtn, color: "#e8a87c" }}>🔊</button>
+                        <button onClick={() => speak(w)} style={{ ...styles.iconBtn, color: "#e8a87c" }}>🔊</button>
                         <button onClick={() => handleDelete(w.id)} style={{ ...styles.iconBtn, color: "#e87c7c" }}>🗑️</button>
                       </div>
                     </div>
@@ -406,7 +407,7 @@ export default function App() {
                       ) : (
                         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
                           <RubyText japanese={card.japanese} reading={card.reading} size={32} />
-                          <button onClick={() => speak(card.japanese)}
+                          <button onClick={() => speak(card)}
                             style={{ background: "#fff8f0", border: "1.5px solid #e8c89a", borderRadius: 20, padding: "4px 14px", fontSize: 13, color: "#c4853a", cursor: "pointer", fontFamily: "'Gowun Dodum', sans-serif" }}>
                             🔊 듣기
                           </button>
@@ -450,7 +451,7 @@ export default function App() {
                           <div>
                             {card.showKorean && (
                               <div style={{ textAlign: "center", marginBottom: 10 }}>
-                                <button onClick={() => speak(card.japanese)}
+                                <button onClick={() => speak(card)}
                                   style={{ background: "#fff8f0", border: "1.5px solid #e8c89a", borderRadius: 20, padding: "5px 18px", fontSize: 13, color: "#c4853a", cursor: "pointer", fontFamily: "'Gowun Dodum', sans-serif" }}>
                                   🔊 정답 듣기
                                 </button>
