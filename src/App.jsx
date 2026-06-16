@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 
 const STORAGE_KEY = "jp_vocab_words";
 const DAILY_KEY_PREFIX = "jp_vocab_daily";
@@ -44,6 +44,7 @@ export default function App() {
   const [cardMode, setCardMode] = useState("japanese");
   const [dailyOnly, setDailyOnly] = useState(true);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [toast, setToast] = useState("");
   const [choices, setChoices] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -54,32 +55,29 @@ export default function App() {
   const [selectedLevel, setSelectedLevel] = useState(null);
 
   useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(words)); } catch { /* 저장소 사용 불가 시 무시 */ }
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(words)); } catch {}
   }, [words]);
+
+  // 검색 디바운싱 (300ms)
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   // 급수별 오늘 단어 초기화
   useEffect(() => {
     const today = getTodayStr();
     const newWordsMap = {};
-
     LEVELS.forEach(lv => {
       const pool = lv === "전체" ? words : words.filter(w => w.level === lv);
       if (pool.length === 0) return;
-
       const key = getDailyKey(lv);
       let saved = null;
-      try { const s = localStorage.getItem(key); saved = s ? JSON.parse(s) : null; } catch { /* 파싱 실패 시 saved=null 유지 */ }
-
-      // 오늘 이미 선택된 게 있으면 그대로 사용
+      try { const s = localStorage.getItem(key); saved = s ? JSON.parse(s) : null; } catch {}
       if (saved && saved.date === today && saved.wordIds) {
         const todayWords = saved.wordIds.map(id => words.find(w => w.id === id)).filter(Boolean);
-        if (todayWords.length > 0) {
-          newWordsMap[lv] = todayWords;
-          return;
-        }
+        if (todayWords.length > 0) { newWordsMap[lv] = todayWords; return; }
       }
-
-      // 새로 선택
       const usedDates = saved?.usedDates || {};
       const cooldownDate = new Date();
       cooldownDate.setDate(cooldownDate.getDate() - COOLDOWN_DAYS);
@@ -90,12 +88,8 @@ export default function App() {
       selected.forEach(w => { newUsedDates[w.id] = today; });
       const newDaily = { date: today, wordIds: selected.map(w => w.id), usedDates: newUsedDates };
       newWordsMap[lv] = selected;
-      try { localStorage.setItem(key, JSON.stringify(newDaily)); } catch { /* 저장소 사용 불가 시 무시 */ }
+      try { localStorage.setItem(key, JSON.stringify(newDaily)); } catch {}
     });
-
-    // words 변경 시 1회 실행되는 초기화 effect (localStorage 영속화 + 랜덤 추첨 포함).
-    // 부수효과가 있어 render 중 계산할 수 없으므로 effect 내 setState가 의도된 동작임.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDailyWordsMap(newWordsMap);
   }, [words]);
 
@@ -114,9 +108,15 @@ export default function App() {
     setTimeout(() => setToast(""), 2000);
   };
 
-  const filtered = words.filter(w =>
-    w.japanese.includes(search) || w.korean.includes(search) || (w.reading && w.reading.includes(search))
-  );
+  // useMemo로 필터링 최적화 + 디바운싱된 검색어 사용
+  const filtered = useMemo(() => {
+    if (!debouncedSearch) return words;
+    return words.filter(w =>
+      w.japanese.includes(debouncedSearch) ||
+      w.korean.includes(debouncedSearch) ||
+      (w.reading && w.reading.includes(debouncedSearch))
+    );
+  }, [words, debouncedSearch]);
 
   const getLevelPool = useCallback((level) => {
     if (level === "전체") return words;
@@ -221,10 +221,10 @@ export default function App() {
   const total = sessionQueue.length;
   const current = cardIndex + 1;
 
-  const levelCounts = LEVELS.reduce((acc, lv) => {
+  const levelCounts = useMemo(() => LEVELS.reduce((acc, lv) => {
     acc[lv] = lv === "전체" ? words.length : words.filter(w => w.level === lv).length;
     return acc;
-  }, {});
+  }, {}), [words]);
 
   const levelColors = {
     "전체": { bg: "#3d2d1e", color: "#e8c89a", border: "#5a4030" },
@@ -235,7 +235,9 @@ export default function App() {
     "N1": { bg: "#ffe8e8", color: "#8e2a2a", border: "#e87c7c" },
   };
 
-  const totalDailyCount = Object.values(dailyWordsMap).reduce((acc, arr) => acc + arr.length, 0);
+  const totalDailyCount = useMemo(() =>
+    Object.values(dailyWordsMap).reduce((acc, arr) => acc + arr.length, 0),
+  [dailyWordsMap]);
 
   return (
     <div style={styles.container}>
@@ -262,7 +264,7 @@ export default function App() {
         </div>
         <div style={styles.stats}>
           <span style={styles.statBadge}>총 {words.length}개</span>
-          <span style={{ ...styles.statBadge, background: "#3a5a3a", color: "#a8d4a8" }}>
+          <span style={{ ...styles.statBadge, background: "#3a5a3a", color: "#a8d4a8", whiteSpace: "nowrap" }}>
             오늘 {totalDailyCount}개
           </span>
         </div>
@@ -279,11 +281,16 @@ export default function App() {
 
       <div style={styles.content}>
 
-        {/* LIST */}
         {tab === "list" && (
           <div>
             <div style={styles.filterRow}>
-              <input placeholder="🔍 검색..." value={search} onChange={e => setSearch(e.target.value)} style={styles.searchInput} />
+              <input
+                placeholder="🔍 검색... (일본어/한국어/히라가나)"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                onCompositionEnd={e => setDebouncedSearch(e.target.value)}
+                style={styles.searchInput}
+              />
             </div>
             <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
               <button onClick={handleExport}
@@ -302,7 +309,7 @@ export default function App() {
               </div>
             </div>
             {filtered.length === 0 ? (
-              <div style={styles.empty}><div style={{ fontSize: 48, marginBottom: 12 }}>📭</div><div style={{ color: "#9e8878" }}>단어가 없어요!</div></div>
+              <div style={styles.empty}><div style={{ fontSize: 48, marginBottom: 12 }}>📭</div><div style={{ color: "#9e8878" }}>{search ? "검색 결과가 없어요!" : "단어가 없어요!"}</div></div>
             ) : (
               <div style={styles.wordList}>
                 {filtered.map(w => {
@@ -332,7 +339,6 @@ export default function App() {
           </div>
         )}
 
-        {/* FLASH */}
         {tab === "flash" && (
           <div>
             {!selectedLevel ? (
@@ -484,14 +490,14 @@ export default function App() {
 
 const styles = {
   container: { fontFamily: "'Gowun Dodum', sans-serif", background: "#f5f0eb", minHeight: "100vh", paddingBottom: 40 },
-  header: { background: "#2d1f14", padding: "20px 16px 16px", color: "#f5f0eb" },
+  header: { background: "#2d1f14", padding: "20px 16px 16px", color: "#f5f0eb", minHeight: 100 },
   headerInner: { display: "flex", alignItems: "baseline", gap: 10, marginBottom: 10 },
   logo: { fontSize: 28, fontWeight: 700, fontFamily: "'Noto Sans JP', sans-serif", color: "#e8c89a" },
   logoSub: { fontSize: 13, color: "#a08878" },
-  stats: { display: "flex", gap: 8, flexWrap: "wrap" },
-  statBadge: { background: "#3d2d1e", color: "#c4a882", padding: "4px 10px", borderRadius: 20, fontSize: 12 },
+  stats: { display: "flex", gap: 8, flexWrap: "nowrap" },
+  statBadge: { background: "#3d2d1e", color: "#c4a882", padding: "4px 10px", borderRadius: 20, fontSize: 12, whiteSpace: "nowrap" },
   tabs: { display: "flex", background: "#3d2d1e" },
-  tab: { flex: 1, padding: "12px 0", border: "none", background: "transparent", color: "#a08878", fontSize: 13, cursor: "pointer", fontFamily: "'Gowun Dodum', sans-serif" },
+  tab: { flex: 1, padding: "12px 0", border: "none", background: "transparent", color: "#a08878", fontSize: 13, cursor: "pointer", fontFamily: "'Gowun Dodum', sans-serif", height: 44, whiteSpace: "nowrap" },
   tabActive: { background: "#f5f0eb", color: "#4a3728", fontWeight: 700 },
   content: { padding: 16 },
   filterRow: { marginBottom: 12 },
