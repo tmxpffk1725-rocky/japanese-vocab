@@ -109,17 +109,19 @@ export default function App() {
   const filtered = useMemo(() => {
     if (!activeSearch) return words;
     const q = activeSearch;
-    const matched = words.filter(w =>
-      w.japanese.includes(q) ||
-      w.korean.includes(q) ||
-      (w.reading && w.reading.includes(q))
-    );
-    // 검색어로 시작하는 단어를 우선 정렬
+    // 한국어 뜻: 쉼표로 구분된 뜻 중 하나가 정확히 일치 / 일본어·읽기: 포함
+    const matched = words.filter(w => {
+      const koreanMeanings = w.korean.split(/[,，、]/).map(s => s.trim());
+      const koreanExact = koreanMeanings.includes(q);
+      const jpMatch = w.japanese.includes(q) || (w.reading && w.reading.includes(q));
+      return koreanExact || jpMatch;
+    });
+    // 정확히 일치하는 단어를 우선 정렬
     return matched.sort((a, b) => {
-      const aStart = a.korean.startsWith(q) || a.japanese.startsWith(q) || (a.reading && a.reading.startsWith(q));
-      const bStart = b.korean.startsWith(q) || b.japanese.startsWith(q) || (b.reading && b.reading.startsWith(q));
-      if (aStart && !bStart) return -1;
-      if (!aStart && bStart) return 1;
+      const aExact = a.japanese === q || a.korean.split(/[,，、]/).map(s => s.trim()).includes(q) || a.reading === q;
+      const bExact = b.japanese === q || b.korean.split(/[,，、]/).map(s => s.trim()).includes(q) || b.reading === q;
+      if (aExact && !bExact) return -1;
+      if (!aExact && bExact) return 1;
       return 0;
     });
   }, [words, activeSearch]);
