@@ -285,13 +285,21 @@ export default function App() {
         {tab === "list" && (
           <div>
             <div style={styles.filterRow}>
-              <input
-                placeholder="🔍 검색... (일본어/한국어/히라가나)"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                onCompositionEnd={e => setDebouncedSearch(e.target.value)}
-                style={styles.searchInput}
-              />
+              <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+  <input
+    placeholder="🔍 일본어/한국어 검색..."
+    value={search}
+    onChange={e => setSearch(e.target.value)}
+    onKeyDown={e => { if (e.key === "Enter") setDebouncedSearch(search); }}
+    style={{ ...styles.searchInput, marginBottom: 0, flex: 1 }}
+    enterKeyHint="search"
+  />
+  <button
+    onClick={() => setDebouncedSearch(search)}
+    style={{ padding: "10px 16px", borderRadius: 10, border: "none", background: "#e8a87c", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Gowun Dodum', sans-serif", whiteSpace: "nowrap" }}>
+    검색
+  </button>
+</div>
             </div>
             <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
               <button onClick={handleExport}
