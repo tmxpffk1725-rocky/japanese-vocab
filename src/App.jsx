@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 
 const STORAGE_KEY = "jp_vocab_words";
 const DAILY_KEY_PREFIX = "jp_vocab_daily";
@@ -43,8 +43,7 @@ export default function App() {
   const [card, setCard] = useState(null);
   const [cardMode, setCardMode] = useState("japanese");
   const [dailyOnly, setDailyOnly] = useState(true);
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [activeSearch, setActiveSearch] = useState("");
   const [toast, setToast] = useState("");
   const [choices, setChoices] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -53,18 +52,12 @@ export default function App() {
   const [cardIndex, setCardIndex] = useState(0);
   const [sessionDone, setSessionDone] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState(null);
+  const searchRef = useRef(null);
 
   useEffect(() => {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(words)); } catch {}
   }, [words]);
 
-  // 검색 디바운싱 (300ms)
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(search), 300);
-    return () => clearTimeout(timer);
-  }, [search]);
-
-  // 급수별 오늘 단어 초기화
   useEffect(() => {
     const today = getTodayStr();
     const newWordsMap = {};
@@ -83,11 +76,11 @@ export default function App() {
       cooldownDate.setDate(cooldownDate.getDate() - COOLDOWN_DAYS);
       const cooldownStr = cooldownDate.toISOString().slice(0, 10);
       const available = pool.filter(w => { const lu = usedDates[w.id]; return !lu || lu <= cooldownStr; });
-      const selected = shuffle(available.length >= DAILY_COUNT ? available : pool).slice(0, Math.min(DAILY_COUNT, pool.length));
+      const sel = shuffle(available.length >= DAILY_COUNT ? available : pool).slice(0, Math.min(DAILY_COUNT, pool.length));
       const newUsedDates = { ...usedDates };
-      selected.forEach(w => { newUsedDates[w.id] = today; });
-      const newDaily = { date: today, wordIds: selected.map(w => w.id), usedDates: newUsedDates };
-      newWordsMap[lv] = selected;
+      sel.forEach(w => { newUsedDates[w.id] = today; });
+      const newDaily = { date: today, wordIds: sel.map(w => w.id), usedDates: newUsedDates };
+      newWordsMap[lv] = sel;
       try { localStorage.setItem(key, JSON.stringify(newDaily)); } catch {}
     });
     setDailyWordsMap(newWordsMap);
@@ -108,16 +101,19 @@ export default function App() {
     setTimeout(() => setToast(""), 2000);
   };
 
-  // useMemo로 필터링 최적화 + 디바운싱된 검색어 사용
+  const handleSearch = () => {
+    const q = searchRef.current?.value || "";
+    setActiveSearch(q.trim());
+  };
+
   const filtered = useMemo(() => {
-    const q = search.trim();
-    if (!q) return words;
+    if (!activeSearch) return words;
     return words.filter(w =>
-      w.japanese.includes(q) ||
-      w.korean.includes(q) ||
-      (w.reading && w.reading.includes(q))
+      w.japanese.includes(activeSearch) ||
+      w.korean.includes(activeSearch) ||
+      (w.reading && w.reading.includes(activeSearch))
     );
-  }, [words, search]);
+  }, [words, activeSearch]);
 
   const getLevelPool = useCallback((level) => {
     if (level === "전체") return words;
@@ -284,23 +280,30 @@ export default function App() {
 
         {tab === "list" && (
           <div>
-            <div style={styles.filterRow}>
-              <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-  <input
-    placeholder="🔍 일본어/한국어 검색..."
-    value={search}
-    onChange={e => setSearch(e.target.value)}
-    onKeyDown={e => { if (e.key === "Enter") setDebouncedSearch(search); }}
-    style={{ ...styles.searchInput, marginBottom: 0, flex: 1 }}
-    enterKeyHint="search"
-  />
-  <button
-    onClick={() => setDebouncedSearch(search)}
-    style={{ padding: "10px 16px", borderRadius: 10, border: "none", background: "#e8a87c", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Gowun Dodum', sans-serif", whiteSpace: "nowrap" }}>
-    검색
-  </button>
-</div>
+            {/* 검색창 - uncontrolled input + ref 방식 */}
+            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+              <input
+                ref={searchRef}
+                placeholder="🔍 일본어 / 한국어 검색..."
+                onKeyDown={e => { if (e.key === "Enter") handleSearch(); }}
+                style={{ ...styles.searchInput, marginBottom: 0, flex: 1 }}
+                enterKeyHint="search"
+              />
+              <button onClick={handleSearch}
+                style={{ padding: "10px 16px", borderRadius: 10, border: "none", background: "#e8a87c", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Gowun Dodum', sans-serif", whiteSpace: "nowrap" }}>
+                검색
+              </button>
             </div>
+            {activeSearch && (
+              <div style={{ marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 13, color: "#7a6655" }}>"{activeSearch}" 검색 결과 {filtered.length}개</span>
+                <button onClick={() => { setActiveSearch(""); if (searchRef.current) searchRef.current.value = ""; }}
+                  style={{ background: "none", border: "none", cursor: "pointer", color: "#b09a88", fontSize: 12, padding: "2px 6px", borderRadius: 8, border: "1px solid #d4c5b5" }}>
+                  ✕ 초기화
+                </button>
+              </div>
+            )}
+
             <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
               <button onClick={handleExport}
                 style={{ flex: 1, padding: "10px 0", borderRadius: 10, border: "1.5px solid #9b7ce8", background: "#f8f3ff", color: "#9b7ce8", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Gowun Dodum', sans-serif" }}>
@@ -311,14 +314,19 @@ export default function App() {
                 <input type="file" accept=".json" onChange={handleImport} style={{ display: "none" }} />
               </label>
             </div>
+
             <div style={{ background: "#edf7ed", border: "1.5px solid #a8d4a8", borderRadius: 12, padding: "12px 16px", marginBottom: 12 }}>
               <div style={{ fontSize: 12, color: "#4a7a4a", fontWeight: 700, marginBottom: 4 }}>📅 오늘의 단어 ({getTodayStr()})</div>
               <div style={{ fontSize: 13, color: "#4a7a4a" }}>
                 급수별 각 {DAILY_COUNT}개 · 같은 단어는 {COOLDOWN_DAYS}일 안에 다시 안 나와요
               </div>
             </div>
+
             {filtered.length === 0 ? (
-              <div style={styles.empty}><div style={{ fontSize: 48, marginBottom: 12 }}>📭</div><div style={{ color: "#9e8878" }}>{search ? "검색 결과가 없어요!" : "단어가 없어요!"}</div></div>
+              <div style={styles.empty}>
+                <div style={{ fontSize: 48, marginBottom: 12 }}>📭</div>
+                <div style={{ color: "#9e8878" }}>{activeSearch ? "검색 결과가 없어요!" : "단어가 없어요!"}</div>
+              </div>
             ) : (
               <div style={styles.wordList}>
                 {filtered.map(w => {
@@ -509,8 +517,7 @@ const styles = {
   tab: { flex: 1, padding: "12px 0", border: "none", background: "transparent", color: "#a08878", fontSize: 13, cursor: "pointer", fontFamily: "'Gowun Dodum', sans-serif", height: 44, whiteSpace: "nowrap" },
   tabActive: { background: "#f5f0eb", color: "#4a3728", fontWeight: 700 },
   content: { padding: 16 },
-  filterRow: { marginBottom: 12 },
-  searchInput: { width: "100%", padding: "10px 14px", border: "1.5px solid #d4c5b5", borderRadius: 10, background: "#fff", fontSize: 14, fontFamily: "'Gowun Dodum', sans-serif", marginBottom: 10, color: "#2d1f14" },
+  searchInput: { width: "100%", padding: "10px 14px", border: "1.5px solid #d4c5b5", borderRadius: 10, background: "#fff", fontSize: 14, fontFamily: "'Gowun Dodum', sans-serif", color: "#2d1f14" },
   wordList: { display: "flex", flexDirection: "column", gap: 8 },
   wordRow: { background: "#fff", borderRadius: 12, padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", transition: "background 0.15s" },
   wordLeft: { display: "flex", gap: 10, alignItems: "flex-start" },
