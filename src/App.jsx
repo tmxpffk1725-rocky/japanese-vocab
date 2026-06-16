@@ -110,13 +110,14 @@ export default function App() {
 
   // useMemo로 필터링 최적화 + 디바운싱된 검색어 사용
   const filtered = useMemo(() => {
-    if (!debouncedSearch) return words;
+    const q = search.trim();
+    if (!q) return words;
     return words.filter(w =>
-      w.japanese.includes(debouncedSearch) ||
-      w.korean.includes(debouncedSearch) ||
-      (w.reading && w.reading.includes(debouncedSearch))
+      w.japanese.includes(q) ||
+      w.korean.includes(q) ||
+      (w.reading && w.reading.includes(q))
     );
-  }, [words, debouncedSearch]);
+  }, [words, search]);
 
   const getLevelPool = useCallback((level) => {
     if (level === "전체") return words;
