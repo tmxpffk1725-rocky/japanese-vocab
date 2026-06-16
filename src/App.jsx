@@ -108,11 +108,20 @@ export default function App() {
 
   const filtered = useMemo(() => {
     if (!activeSearch) return words;
-    return words.filter(w =>
-      w.japanese.includes(activeSearch) ||
-      w.korean.includes(activeSearch) ||
-      (w.reading && w.reading.includes(activeSearch))
+    const q = activeSearch;
+    const matched = words.filter(w =>
+      w.japanese.includes(q) ||
+      w.korean.includes(q) ||
+      (w.reading && w.reading.includes(q))
     );
+    // 검색어로 시작하는 단어를 우선 정렬
+    return matched.sort((a, b) => {
+      const aStart = a.korean.startsWith(q) || a.japanese.startsWith(q) || (a.reading && a.reading.startsWith(q));
+      const bStart = b.korean.startsWith(q) || b.japanese.startsWith(q) || (b.reading && b.reading.startsWith(q));
+      if (aStart && !bStart) return -1;
+      if (!aStart && bStart) return 1;
+      return 0;
+    });
   }, [words, activeSearch]);
 
   const getLevelPool = useCallback((level) => {
