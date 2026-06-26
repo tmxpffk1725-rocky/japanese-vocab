@@ -48,7 +48,7 @@ export default function App() {
           }
         }
         // localStorage 비어있으면 번들 JSON 파일에서 로딩
-        const res = await fetch(`${process.env.PUBLIC_URL}/jlpt_all_fixed.json`);
+        const res = await fetch(`${import.meta.env.BASE_URL}jlpt_all_fixed.json`);
         const data = await res.json();
         setWords(data);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
