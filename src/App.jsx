@@ -203,42 +203,6 @@ export default function App() {
     showToast("삭제됐어요");
   };
 
-  const handleExport = () => {
-    const data = JSON.stringify(words, null, 2);
-    const blob = new Blob([data], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `단어장_${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast("내보내기 완료 ✓");
-  };
-
-  const handleImport = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      try {
-        const imported = JSON.parse(ev.target.result);
-        if (!Array.isArray(imported)) { showToast("올바른 파일이 아니에요!"); return; }
-        const merged = [...words];
-        let added = 0;
-        imported.forEach(w => {
-          if (!merged.find(existing => existing.japanese === w.japanese)) {
-            merged.push({ ...w, id: Date.now() + Math.random() });
-            added++;
-          }
-        });
-        setWords(merged);
-        showToast(`${added}개 단어를 가져왔어요 ✓`);
-      } catch { showToast("파일을 읽을 수 없어요!"); }
-    };
-    reader.readAsText(file);
-    e.target.value = "";
-  };
-
   const handleChoice = (choice) => {
     if (answered) return;
     setSelected(choice);
@@ -347,17 +311,6 @@ export default function App() {
                 </button>
               </div>
             )}
-
-            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-              <button onClick={handleExport}
-                style={{ flex: 1, padding: "10px 0", borderRadius: 10, border: "1.5px solid #9b7ce8", background: "#f8f3ff", color: "#9b7ce8", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Gowun Dodum', sans-serif" }}>
-                📤 내보내기
-              </button>
-              <label style={{ flex: 1, padding: "10px 0", borderRadius: 10, border: "1.5px solid #7cb8e8", background: "#f3f8ff", color: "#7cb8e8", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Gowun Dodum', sans-serif", textAlign: "center" }}>
-                📥 가져오기
-                <input type="file" accept=".json" onChange={handleImport} style={{ display: "none" }} />
-              </label>
-            </div>
 
             <div style={{ background: "#edf7ed", border: "1.5px solid #a8d4a8", borderRadius: 12, padding: "12px 16px", marginBottom: 12 }}>
               <div style={{ fontSize: 12, color: "#4a7a4a", fontWeight: 700, marginBottom: 4 }}>📅 오늘의 단어 ({getTodayStr()})</div>
