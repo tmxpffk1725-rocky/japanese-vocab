@@ -31,12 +31,35 @@ function RubyText({ japanese, reading, size = 32, color = "#2d1f14" }) {
 }
 
 export default function App() {
-  const [words, setWords] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : [];
-    } catch { return []; }
-  });
+  const [words, setWords] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // 앱 시작 시: localStorage 있으면 그대로, 없으면 JSON 파일에서 로딩
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setWords(parsed);
+            setLoading(false);
+            return;
+          }
+        }
+        // localStorage 비어있으면 번들 JSON 파일에서 로딩
+        const res = await fetch(`${process.env.PUBLIC_URL}/jlpt_all_fixed.json`);
+        const data = await res.json();
+        setWords(data);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      } catch (e) {
+        console.error("단어 데이터 로딩 실패:", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    init();
+  }, []);
 
   const [dailyWordsMap, setDailyWordsMap] = useState({});
   const [tab, setTab] = useState("list");
@@ -55,10 +78,12 @@ export default function App() {
   const searchRef = useRef(null);
 
   useEffect(() => {
+    if (loading || words.length === 0) return;
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(words)); } catch {}
-  }, [words]);
+  }, [words, loading]);
 
   useEffect(() => {
+    if (loading || words.length === 0) return;
     const today = getTodayStr();
     const newWordsMap = {};
     LEVELS.forEach(lv => {
@@ -84,7 +109,7 @@ export default function App() {
       try { localStorage.setItem(key, JSON.stringify(newDaily)); } catch {}
     });
     setDailyWordsMap(newWordsMap);
-  }, [words]);
+  }, [words, loading]);
 
   const speak = (word) => {
     if (!window.speechSynthesis) return;
@@ -109,14 +134,12 @@ export default function App() {
   const filtered = useMemo(() => {
     if (!activeSearch) return words;
     const q = activeSearch;
-    // 한국어 뜻: 쉼표로 구분된 뜻 중 하나가 정확히 일치 / 일본어·읽기: 포함
     const matched = words.filter(w => {
       const koreanMeanings = w.korean.split(/[,，、]/).map(s => s.trim());
       const koreanExact = koreanMeanings.includes(q);
       const jpMatch = w.japanese.includes(q) || (w.reading && w.reading.includes(q));
       return koreanExact || jpMatch;
     });
-    // 정확히 일치하는 단어를 우선 정렬
     return matched.sort((a, b) => {
       const aExact = a.japanese === q || a.korean.split(/[,，、]/).map(s => s.trim()).includes(q) || a.reading === q;
       const bExact = b.japanese === q || b.korean.split(/[,，、]/).map(s => s.trim()).includes(q) || b.reading === q;
@@ -247,6 +270,17 @@ export default function App() {
     Object.values(dailyWordsMap).reduce((acc, arr) => acc + arr.length, 0),
   [dailyWordsMap]);
 
+  // 로딩 화면
+  if (loading) {
+    return (
+      <div style={{ fontFamily: "'Gowun Dodum', sans-serif", background: "#f5f0eb", minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 }}>
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Gowun+Dodum&display=swap');`}</style>
+        <span style={{ fontSize: 36, fontFamily: "'Noto Sans JP', sans-serif", color: "#e8c89a", background: "#2d1f14", padding: "12px 24px", borderRadius: 16 }}>語彙帳</span>
+        <span style={{ color: "#9e8878", fontSize: 14 }}>단어 불러오는 중...</span>
+      </div>
+    );
+  }
+
   return (
     <div style={styles.container}>
       <style>{`
@@ -291,7 +325,6 @@ export default function App() {
 
         {tab === "list" && (
           <div>
-            {/* 검색창 - uncontrolled input + ref 방식 */}
             <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
               <input
                 ref={searchRef}
