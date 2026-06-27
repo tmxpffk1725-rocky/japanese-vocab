@@ -6,7 +6,7 @@ const getDailyKey = (level) => `${DAILY_KEY_PREFIX}_${level}`;
 const COOLDOWN_DAYS = 4;
 const DAILY_COUNT = 30;
 
-const LEVELS = ["전체", "N5", "N4", "N3", "N2", "N1"];
+const LEVELS = ["전체", "N5", "N4", "N3", "N2", "N1", "추가"];
 
 function shuffle(arr) {
   return [...arr].sort(() => Math.random() - 0.5);
@@ -75,6 +75,8 @@ export default function App() {
   const [cardIndex, setCardIndex] = useState(0);
   const [sessionDone, setSessionDone] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [form, setForm] = useState({ japanese: "", reading: "", korean: "" });
   const searchRef = useRef(null);
 
   useEffect(() => {
@@ -203,6 +205,24 @@ export default function App() {
     showToast("삭제됐어요");
   };
 
+  const handleAddWord = () => {
+    const japanese = form.japanese.trim();
+    const reading = form.reading.trim();
+    const korean = form.korean.trim();
+    if (!japanese || !korean) { showToast("일본어와 뜻은 필수예요!"); return; }
+    // 일본어(한자/가나)와 읽기(히라가나)가 둘 다 같을 때만 중복으로 판정
+    const dup = words.some(w =>
+      (w.japanese || "").trim() === japanese && (w.reading || "").trim() === reading
+    );
+    if (dup) { showToast("이미 있는 단어예요!"); return; }
+    let id = Date.now();
+    while (words.some(w => w.id === id)) id++;
+    const newWord = { id, japanese, reading, korean, level: "추가", type: "vocab" };
+    setWords(prev => [newWord, ...prev]);
+    setForm({ japanese: "", reading: "", korean: "" });
+    showToast("단어를 추가했어요 ✓");
+  };
+
   const handleChoice = (choice) => {
     if (answered) return;
     setSelected(choice);
@@ -228,6 +248,7 @@ export default function App() {
     "N3": { bg: "#fff8e8", color: "#8e6a2a", border: "#e8c87c" },
     "N2": { bg: "#f8e8ff", color: "#6a2a8e", border: "#c87ce8" },
     "N1": { bg: "#ffe8e8", color: "#8e2a2a", border: "#e87c7c" },
+    "추가": { bg: "#fff3e8", color: "#a85f2a", border: "#e8a87c" },
   };
 
   const totalDailyCount = useMemo(() =>
@@ -302,6 +323,28 @@ export default function App() {
                 검색
               </button>
             </div>
+
+            <button onClick={() => setShowAddForm(p => !p)}
+              style={{ width: "100%", padding: "10px 0", marginBottom: 12, borderRadius: 10, border: "1.5px solid #7cc87c", background: showAddForm ? "#7cc87c" : "#edf7ed", color: showAddForm ? "#fff" : "#4a7a4a", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Gowun Dodum', sans-serif" }}>
+              {showAddForm ? "✕ 닫기" : "➕ 단어 추가"}
+            </button>
+
+            {showAddForm && (
+              <div style={{ background: "#fff", border: "1.5px solid #d4c5b5", borderRadius: 12, padding: 14, marginBottom: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+                <input value={form.japanese} onChange={e => setForm(f => ({ ...f, japanese: e.target.value }))}
+                  placeholder="일본어 (한자/가나) *" style={styles.searchInput} />
+                <input value={form.reading} onChange={e => setForm(f => ({ ...f, reading: e.target.value }))}
+                  placeholder="읽기 (히라가나)" style={styles.searchInput} />
+                <input value={form.korean} onChange={e => setForm(f => ({ ...f, korean: e.target.value }))}
+                  placeholder="뜻 (한국어) *" style={styles.searchInput} />
+                <button onClick={handleAddWord}
+                  style={{ ...styles.submitBtn, background: "#7cc87c" }}>추가하기</button>
+                <div style={{ fontSize: 12, color: "#b09a88", textAlign: "center" }}>
+                  "추가" 레벨로 등록돼요 · 일본어·읽기가 둘 다 같은 단어가 있으면 추가되지 않아요
+                </div>
+              </div>
+            )}
+
             {activeSearch && (
               <div style={{ marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ fontSize: 13, color: "#7a6655" }}>"{activeSearch}" 검색 결과 {filtered.length}개</span>
