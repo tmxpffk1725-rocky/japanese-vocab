@@ -223,6 +223,20 @@ export default function App() {
     showToast("단어를 추가했어요 ✓");
   };
 
+  // 추가한 단어를 모두 지우고 기본 단어로 되돌림 (번들 JSON 재로딩)
+  const handleReset = async () => {
+    if (!window.confirm("추가한 단어를 모두 지우고 기본 단어로 되돌릴까요?\n(되돌릴 수 없어요)")) return;
+    try {
+      const res = await fetch(`${import.meta.env.BASE_URL}jlpt_all_fixed.json`);
+      const data = await res.json();
+      setWords(data);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      showToast("기본 단어로 초기화했어요 ✓");
+    } catch {
+      showToast("초기화에 실패했어요!");
+    }
+  };
+
   const handleChoice = (choice) => {
     if (answered) return;
     setSelected(choice);
@@ -341,6 +355,14 @@ export default function App() {
                   style={{ ...styles.submitBtn, background: "#7cc87c" }}>추가하기</button>
                 <div style={{ fontSize: 12, color: "#b09a88", textAlign: "center" }}>
                   "추가" 레벨로 등록돼요 · 일본어·읽기가 둘 다 같은 단어가 있으면 추가되지 않아요
+                </div>
+                <div style={{ borderTop: "1px solid #ede5da", margin: "4px 0 0" }} />
+                <button onClick={handleReset}
+                  style={{ width: "100%", padding: "9px 0", borderRadius: 10, border: "1.5px solid #e8a8a8", background: "#fff", color: "#c46a6a", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Gowun Dodum', sans-serif" }}>
+                  🔄 기본 단어로 초기화
+                </button>
+                <div style={{ fontSize: 12, color: "#c4a0a0", textAlign: "center" }}>
+                  추가한 단어를 모두 지우고 기본 단어로 되돌려요
                 </div>
               </div>
             )}
