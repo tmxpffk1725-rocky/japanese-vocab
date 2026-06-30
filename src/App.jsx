@@ -4,7 +4,9 @@ const STORAGE_KEY = "jp_vocab_words";
 const DAILY_KEY_PREFIX = "jp_vocab_daily";
 const getDailyKey = (level) => `${DAILY_KEY_PREFIX}_${level}`;
 const COOLDOWN_DAYS = 4;
-const DAILY_COUNT = 30;
+const DEFAULT_DAILY_COUNT = 30;
+const MAX_DAILY_COUNT = 100;
+const DAILY_COUNT_KEY = "jp_vocab_daily_count";
 
 const LEVELS = ["전체", "N5", "N4", "N3", "N2", "N1", "추가"];
 
@@ -33,6 +35,18 @@ function RubyText({ japanese, reading, size = 32, color = "#2d1f14" }) {
 export default function App() {
   const [words, setWords] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [dailyCounts, setDailyCounts] = useState(() => {
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(DAILY_COUNT_KEY)); } catch {}
+    // 구버전: 단일 숫자로 저장돼 있으면 모든 급수에 동일 적용
+    const legacy = (typeof saved === "number" && saved > 0) ? Math.min(saved, MAX_DAILY_COUNT) : DEFAULT_DAILY_COUNT;
+    const result = {};
+    LEVELS.forEach(lv => {
+      const v = saved && typeof saved === "object" ? saved[lv] : undefined;
+      result[lv] = v > 0 ? Math.min(v, MAX_DAILY_COUNT) : legacy;
+    });
+    return result;
+  });
 
   // 앱 시작 시: localStorage 있으면 그대로, 없으면 JSON 파일에서 로딩
   useEffect(() => {
@@ -76,6 +90,7 @@ export default function App() {
   const [sessionDone, setSessionDone] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showCountSettings, setShowCountSettings] = useState(false);
   const [form, setForm] = useState({ japanese: "", reading: "", korean: "" });
   const searchRef = useRef(null);
 
@@ -85,6 +100,10 @@ export default function App() {
   }, [words, loading]);
 
   useEffect(() => {
+    try { localStorage.setItem(DAILY_COUNT_KEY, JSON.stringify(dailyCounts)); } catch {}
+  }, [dailyCounts]);
+
+  useEffect(() => {
     if (loading || words.length === 0) return;
     const today = getTodayStr();
     const newWordsMap = {};
@@ -92,9 +111,11 @@ export default function App() {
       const pool = lv === "전체" ? words : words.filter(w => w.level === lv);
       if (pool.length === 0) return;
       const key = getDailyKey(lv);
+      const count = dailyCounts[lv] ?? DEFAULT_DAILY_COUNT;
       let saved = null;
       try { const s = localStorage.getItem(key); saved = s ? JSON.parse(s) : null; } catch {}
-      if (saved && saved.date === today && saved.wordIds) {
+      const savedCount = saved?.count ?? DEFAULT_DAILY_COUNT;
+      if (saved && saved.date === today && savedCount === count && saved.wordIds) {
         const todayWords = saved.wordIds.map(id => words.find(w => w.id === id)).filter(Boolean);
         if (todayWords.length > 0) { newWordsMap[lv] = todayWords; return; }
       }
@@ -103,15 +124,15 @@ export default function App() {
       cooldownDate.setDate(cooldownDate.getDate() - COOLDOWN_DAYS);
       const cooldownStr = cooldownDate.toISOString().slice(0, 10);
       const available = pool.filter(w => { const lu = usedDates[w.id]; return !lu || lu <= cooldownStr; });
-      const sel = shuffle(available.length >= DAILY_COUNT ? available : pool).slice(0, Math.min(DAILY_COUNT, pool.length));
+      const sel = shuffle(available.length >= count ? available : pool).slice(0, Math.min(count, pool.length));
       const newUsedDates = { ...usedDates };
       sel.forEach(w => { newUsedDates[w.id] = today; });
-      const newDaily = { date: today, wordIds: sel.map(w => w.id), usedDates: newUsedDates };
+      const newDaily = { date: today, count, wordIds: sel.map(w => w.id), usedDates: newUsedDates };
       newWordsMap[lv] = sel;
       try { localStorage.setItem(key, JSON.stringify(newDaily)); } catch {}
     });
     setDailyWordsMap(newWordsMap);
-  }, [words, loading]);
+  }, [words, loading, dailyCounts]);
 
   const speak = (word) => {
     if (!window.speechSynthesis) return;
@@ -379,9 +400,26 @@ export default function App() {
 
             <div style={{ background: "#edf7ed", border: "1.5px solid #a8d4a8", borderRadius: 12, padding: "12px 16px", marginBottom: 12 }}>
               <div style={{ fontSize: 12, color: "#4a7a4a", fontWeight: 700, marginBottom: 4 }}>📅 오늘의 단어 ({getTodayStr()})</div>
-              <div style={{ fontSize: 13, color: "#4a7a4a" }}>
-                급수별 각 {DAILY_COUNT}개 · 같은 단어는 {COOLDOWN_DAYS}일 안에 다시 안 나와요
+              <div style={{ fontSize: 13, color: "#4a7a4a", marginBottom: 10 }}>
+                급수별로 하루 단어 수를 정할 수 있어요 · 같은 단어는 {COOLDOWN_DAYS}일 안에 다시 안 나와요
               </div>
+              <button onClick={() => setShowCountSettings(p => !p)}
+                style={{ width: "100%", padding: "8px 0", borderRadius: 10, border: "1.5px solid #a8d4a8", background: "#fff", color: "#4a7a4a", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Gowun Dodum', sans-serif" }}>
+                ⚙️ 급수별 단어 수 설정 {showCountSettings ? "▲" : "▼"}
+              </button>
+              {showCountSettings && (
+                <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+                  {LEVELS.map(lv => (
+                    <div key={lv} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, minWidth: 34, color: levelColors[lv].color }}>{lv}</span>
+                      <input type="range" min={5} max={MAX_DAILY_COUNT} step={5} value={dailyCounts[lv]}
+                        onChange={e => setDailyCounts(prev => ({ ...prev, [lv]: Number(e.target.value) }))}
+                        style={{ flex: 1, accentColor: "#7cc87c", cursor: "pointer" }} />
+                      <span style={{ fontSize: 13, color: "#2a6e2a", fontWeight: 700, minWidth: 40, textAlign: "right" }}>{dailyCounts[lv]}개</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {filtered.length === 0 ? (
