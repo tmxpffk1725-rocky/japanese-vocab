@@ -38,12 +38,10 @@ export default function App() {
   const [dailyCounts, setDailyCounts] = useState(() => {
     let saved = null;
     try { saved = JSON.parse(localStorage.getItem(DAILY_COUNT_KEY)); } catch {}
-    // 구버전: 단일 숫자로 저장돼 있으면 모든 급수에 동일 적용
-    const legacy = (typeof saved === "number" && saved > 0) ? Math.min(saved, MAX_DAILY_COUNT) : DEFAULT_DAILY_COUNT;
     const result = {};
     LEVELS.forEach(lv => {
       const v = saved && typeof saved === "object" ? saved[lv] : undefined;
-      result[lv] = v > 0 ? Math.min(v, MAX_DAILY_COUNT) : legacy;
+      result[lv] = v > 0 ? Math.min(v, MAX_DAILY_COUNT) : DEFAULT_DAILY_COUNT;
     });
     return result;
   });
@@ -198,7 +196,7 @@ export default function App() {
     setCardIndex(0);
     setSessionDone(false);
     const first = queue[0];
-    const showKorean = cardMode === "korean";
+    const showKorean = cardMode === "random" ? Math.random() < 0.5 : cardMode === "korean";
     setCard({ ...first, showKorean });
     setSelected(null);
     setAnswered(false);
@@ -208,7 +206,7 @@ export default function App() {
   const drawCard = useCallback((queue, index) => {
     if (!queue || index >= queue.length) { setSessionDone(true); return; }
     const word = queue[index];
-    const showKorean = cardMode === "korean";
+    const showKorean = cardMode === "random" ? Math.random() < 0.5 : cardMode === "korean";
     setCard({ ...word, showKorean });
     setSelected(null);
     setAnswered(false);
@@ -308,11 +306,10 @@ export default function App() {
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #f5f0eb; }
         .word-row:hover { background: #f0ebe5 !important; }
-        .btn-hover:hover { opacity: 0.85; transform: translateY(-1px); }
         .tab-btn { transition: all 0.2s; }
         .choice-btn:hover:not([disabled]) { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .level-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
-        input:focus, select:focus, textarea:focus { outline: 2px solid #e8a87c; outline-offset: 1px; }
+        input:focus, select:focus { outline: 2px solid #e8a87c; outline-offset: 1px; }
         ruby { display: inline-flex; flex-direction: column-reverse; align-items: center; vertical-align: bottom; }
         rt { display: block; text-align: center; line-height: 1.2; }
         ::-webkit-scrollbar { width: 4px; }
@@ -441,7 +438,6 @@ export default function App() {
                             {w.level && <span style={{ fontSize: 10, background: levelColors[w.level]?.bg || "#f5f0eb", color: levelColors[w.level]?.color || "#6b5744", padding: "1px 6px", borderRadius: 8, fontWeight: 700, border: `1px solid ${levelColors[w.level]?.border || "#d4c5b5"}` }}>{w.level}</span>}
                           </div>
                           <div style={styles.korean}>{w.korean}</div>
-                          {w.example && <div style={styles.example}>{w.example}</div>}
                         </div>
                       </div>
                       <div style={styles.wordRight}>
@@ -580,12 +576,6 @@ export default function App() {
                                 </button>
                               </div>
                             )}
-                            {card.example && (
-                              <div style={{ background: "#fff", borderRadius: 12, padding: "12px 16px", marginBottom: 12, border: "1px solid #ede5da" }}>
-                                <div style={{ fontSize: 11, color: "#b09a88", marginBottom: 4 }}>예문</div>
-                                <div style={{ fontSize: 13, color: "#6b5744", fontFamily: "'Noto Sans JP', sans-serif" }}>{card.example}</div>
-                              </div>
-                            )}
                             <button onClick={() => { const next = cardIndex + 1; setCardIndex(next); drawCard(sessionQueue, next); }} style={{ ...styles.submitBtn, background: "#4a3728" }}>다음 문제 →</button>
                           </div>
                         )}
@@ -622,7 +612,6 @@ const styles = {
   wordRow: { background: "#fff", borderRadius: 12, padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", transition: "background 0.15s" },
   wordLeft: { display: "flex", gap: 10, alignItems: "flex-start" },
   korean: { fontSize: 13, color: "#7a6655", marginTop: 4 },
-  example: { fontSize: 12, color: "#b09a88", marginTop: 4, fontFamily: "'Noto Sans JP', sans-serif" },
   wordRight: { display: "flex", alignItems: "center", gap: 4, flexShrink: 0 },
   iconBtn: { background: "none", border: "none", cursor: "pointer", fontSize: 15, padding: "4px" },
   empty: { textAlign: "center", padding: "60px 20px", color: "#b09a88" },
