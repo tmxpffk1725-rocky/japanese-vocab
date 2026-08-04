@@ -607,7 +607,8 @@ const styles = {
   tab: { flex: 1, padding: "12px 0", border: "none", background: "transparent", color: "#a08878", fontSize: 13, cursor: "pointer", fontFamily: "'Gowun Dodum', sans-serif", height: 44, whiteSpace: "nowrap" },
   tabActive: { background: "#f5f0eb", color: "#4a3728", fontWeight: 700 },
   content: { padding: 16 },
-  searchInput: { width: "100%", padding: "10px 14px", border: "1.5px solid #d4c5b5", borderRadius: 10, background: "#fff", fontSize: 14, fontFamily: "'Gowun Dodum', sans-serif", color: "#2d1f14" },
+  // fontSize 16 미만이면 모바일에서 포커스 시 자동 확대됨
+  searchInput: { width: "100%", padding: "10px 14px", border: "1.5px solid #d4c5b5", borderRadius: 10, background: "#fff", fontSize: 16, fontFamily: "'Gowun Dodum', sans-serif", color: "#2d1f14" },
   wordList: { display: "flex", flexDirection: "column", gap: 8 },
   wordRow: { background: "#fff", borderRadius: 12, padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", transition: "background 0.15s" },
   wordLeft: { display: "flex", gap: 10, alignItems: "flex-start" },
@@ -616,7 +617,7 @@ const styles = {
   iconBtn: { background: "none", border: "none", cursor: "pointer", fontSize: 15, padding: "4px" },
   empty: { textAlign: "center", padding: "60px 20px", color: "#b09a88" },
   submitBtn: { width: "100%", padding: "11px", background: "#e8a87c", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, cursor: "pointer", fontWeight: 700, fontFamily: "'Gowun Dodum', sans-serif", transition: "all 0.2s", display: "block" },
-  select: { padding: "9px 12px", border: "1.5px solid #d4c5b5", borderRadius: 10, background: "#fff", fontSize: 13, fontFamily: "'Gowun Dodum', sans-serif", color: "#4a3728" },
+  select: { padding: "9px 12px", border: "1.5px solid #d4c5b5", borderRadius: 10, background: "#fff", fontSize: 16, fontFamily: "'Gowun Dodum', sans-serif", color: "#4a3728" },
   flashCard: { borderRadius: 20, border: "2px solid #d4c5b5", background: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 130, padding: 16, textAlign: "center" },
   toast: { position: "fixed", bottom: 30, left: "50%", transform: "translateX(-50%)", background: "#2d1f14", color: "#e8c89a", padding: "10px 24px", borderRadius: 30, fontSize: 14, zIndex: 999, boxShadow: "0 4px 20px rgba(0,0,0,0.2)" },
 };
