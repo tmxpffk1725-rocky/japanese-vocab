@@ -3218,7 +3218,7 @@
   {
     "japanese": "何",
     "reading": "なん",
-    "korean": "무엇. 몇-- N2, 난- (어려운)",
+    "korean": "무엇. 몇-",
     "id": 5000000403,
     "level": "N5",
     "type": "vocab"
@@ -4858,7 +4858,7 @@
   {
     "japanese": "いかがですか",
     "reading": "いかがですか",
-    "korean": "보다 공손한 말. 어떻습니까",
+    "korean": "어떻습니까 (공손한 말)",
     "id": 4000000034,
     "level": "N4",
     "type": "vocab"
@@ -4930,7 +4930,7 @@
   {
     "japanese": "致す",
     "reading": "いたす",
-    "korean": "의 낮춤말. 해드리다",
+    "korean": "해드리다 (낮춤말)",
     "id": 4000000043,
     "level": "N4",
     "type": "vocab"
@@ -4938,7 +4938,7 @@
   {
     "japanese": "頂く",
     "reading": "いただく",
-    "korean": "의 낮춤말. 먹다. 마시다. 받다",
+    "korean": "먹다. 마시다. 받다 (낮춤말)",
     "id": 4000000044,
     "level": "N4",
     "type": "vocab"
@@ -5058,7 +5058,7 @@
   {
     "japanese": "いらっしゃる",
     "reading": "いらっしゃる",
-    "korean": "의 높임말. 가시다. 오시다. 계시다",
+    "korean": "가시다. 오시다. 계시다 (높임말)",
     "id": 4000000059,
     "level": "N4",
     "type": "vocab"
@@ -5082,7 +5082,7 @@
   {
     "japanese": "伺う",
     "reading": "うかがう",
-    "korean": "의 낮춤말. 여쭙다. 찾아뵙다",
+    "korean": "여쭙다. 찾아뵙다 (낮춤말)",
     "id": 4000000062,
     "level": "N4",
     "type": "vocab"
@@ -5434,7 +5434,7 @@
   {
     "japanese": "おっしゃる",
     "reading": "おっしゃる",
-    "korean": "의 높임말. 말씀하시다",
+    "korean": "말씀하시다 (높임말)",
     "id": 4000000106,
     "level": "N4",
     "type": "vocab"
@@ -5546,7 +5546,7 @@
   {
     "japanese": "お目にかかる",
     "reading": "おめにかかる",
-    "korean": "의 낮춤말. 만나뵙다",
+    "korean": "만나뵙다 (낮춤말)",
     "id": 4000000120,
     "level": "N4",
     "type": "vocab"
@@ -5578,7 +5578,7 @@
   {
     "japanese": "お休みになる",
     "reading": "おやすみになる",
-    "korean": "의 높임말. 주무시다. 쉬시다",
+    "korean": "주무시다. 쉬시다 (높임말)",
     "id": 4000000124,
     "level": "N4",
     "type": "vocab"
@@ -5594,7 +5594,7 @@
   {
     "japanese": "おる",
     "reading": "おる",
-    "korean": "의 낮춤말. 있다",
+    "korean": "있다 (낮춤말)",
     "id": 4000000126,
     "level": "N4",
     "type": "vocab"
@@ -5834,7 +5834,7 @@
   {
     "japanese": "方",
     "reading": "かた",
-    "korean": "분",
+    "korean": "분 (사람의 높임말)",
     "id": 4000000156,
     "level": "N4",
     "type": "vocab"
@@ -6362,7 +6362,7 @@
   {
     "japanese": "下さる",
     "reading": "くださる",
-    "korean": "의 높임말. (나에게) 주시다",
+    "korean": "(나에게) 주시다 (높임말)",
     "id": 4000000222,
     "level": "N4",
     "type": "vocab"
@@ -6802,7 +6802,7 @@
   {
     "japanese": "ご存知だ",
     "reading": "ごぞんじだ",
-    "korean": "의 높임말. 알고 계시다",
+    "korean": "알고 계시다 (높임말)",
     "id": 4000000277,
     "level": "N4",
     "type": "vocab"
@@ -6906,7 +6906,7 @@
   {
     "japanese": "ご覧になる",
     "reading": "ごらんになる",
-    "korean": "의 높임말. 보시다",
+    "korean": "보시다 (높임말)",
     "id": 4000000290,
     "level": "N4",
     "type": "vocab"
@@ -7074,7 +7074,7 @@
   {
     "japanese": "差し上げる",
     "reading": "さしあげる",
-    "korean": "의 낮춤말. 드리다",
+    "korean": "드리다 (낮춤말)",
     "id": 4000000311,
     "level": "N4",
     "type": "vocab"
@@ -7130,7 +7130,7 @@
   {
     "japanese": "される",
     "reading": "される",
-    "korean": "의 수동형. 당하다. 받다. 되다",
+    "korean": "당하다. 받다. 되다 ('하다'의 수동형)",
     "id": 4000000318,
     "level": "N4",
     "type": "vocab"
@@ -7826,7 +7826,7 @@
   {
     "japanese": "-*",
     "reading": "すぎる",
-    "korean": "너무 하다. 지나치게 하다",
+    "korean": "(동사에 붙어) 너무 ~하다. 지나치게 ~하다",
     "id": 4000000405,
     "level": "N4",
     "type": "vocab"
@@ -8274,7 +8274,7 @@
   {
     "japanese": "存じる",
     "reading": "ぞんじる",
-    "korean": "의 낮춤말. 알다. 알고 있다",
+    "korean": "알다. 알고 있다 (낮춤말)",
     "id": 4000000461,
     "level": "N4",
     "type": "vocab"
@@ -9386,7 +9386,7 @@
   {
     "japanese": "なさる",
     "reading": "なさる",
-    "korean": "의 높임말. 하시다",
+    "korean": "하시다 (높임말)",
     "id": 4000000600,
     "level": "N4",
     "type": "vocab"
@@ -9498,7 +9498,7 @@
   {
     "japanese": "-*",
     "reading": "にくい",
-    "korean": "-하기 어렵다. -하기 힘들다",
+    "korean": "(동사에 붙어) ~하기 어렵다. ~하기 힘들다",
     "id": 4000000614,
     "level": "N4",
     "type": "vocab"
@@ -9778,7 +9778,7 @@
   {
     "japanese": "拝見する",
     "reading": "はいけんする",
-    "korean": "의 낮춤말. 보다",
+    "korean": "보다 (낮춤말)",
     "id": 4000000649,
     "level": "N4",
     "type": "vocab"
@@ -10650,7 +10650,7 @@
   {
     "japanese": "参る",
     "reading": "まいる",
-    "korean": "의 낮춤말. 가다. 오다",
+    "korean": "가다. 오다 (낮춤말)",
     "id": 4000000758,
     "level": "N4",
     "type": "vocab"
@@ -10898,7 +10898,7 @@
   {
     "japanese": "召し上がる",
     "reading": "めしあがる",
-    "korean": "의 높임말. 잡수시다. 드시다",
+    "korean": "잡수시다. 드시다 (높임말)",
     "id": 4000000789,
     "level": "N4",
     "type": "vocab"
@@ -10914,7 +10914,7 @@
   {
     "japanese": "申し上げる",
     "reading": "もうしあげる",
-    "korean": "의 낮춤말. 말씀드리다. 보고를 올리다",
+    "korean": "말씀드리다. 보고를 올리다 (낮춤말)",
     "id": 4000000791,
     "level": "N4",
     "type": "vocab"
@@ -10922,7 +10922,7 @@
   {
     "japanese": "申す",
     "reading": "もうす",
-    "korean": "의 낮춤말. 말씀드리다",
+    "korean": "말씀드리다 (낮춤말)",
     "id": 4000000792,
     "level": "N4",
     "type": "vocab"
@@ -11026,7 +11026,7 @@
   {
     "japanese": "-*",
     "reading": "やすい",
-    "korean": "-하기 쉽다. -하기 편하다",
+    "korean": "(동사에 붙어) ~하기 쉽다. ~하기 편하다",
     "id": 4000000805,
     "level": "N4",
     "type": "vocab"
@@ -11242,7 +11242,7 @@
   {
     "japanese": "よろしい",
     "reading": "よろしい",
-    "korean": "보다 더 공손한 말. 좋다",
+    "korean": "좋다 (공손한 말)",
     "id": 4000000832,
     "level": "N4",
     "type": "vocab"
@@ -11474,7 +11474,7 @@
   {
     "japanese": "私",
     "reading": "わたくし",
-    "korean": "보다 더 공손한 말. 저",
+    "korean": "저 ('나'의 공손한 말)",
     "id": 4000000861,
     "level": "N4",
     "type": "vocab"
@@ -14514,7 +14514,7 @@
   {
     "japanese": "ございます",
     "reading": "ございます",
-    "korean": "‘’의 공손한 말. 있습니다",
+    "korean": "있습니다 ('있다'의 공손한 말)",
     "id": 3000000374,
     "level": "N3",
     "type": "vocab"
@@ -17818,7 +17818,7 @@
   {
     "japanese": "でございます",
     "reading": "でございます",
-    "korean": "‘’의 공손한 말. -입니다",
+    "korean": "-입니다 ('-이다'의 공손한 말)",
     "id": 3000000787,
     "level": "N3",
     "type": "vocab"
@@ -22226,7 +22226,7 @@
   {
     "japanese": "承る",
     "reading": "うけたまわる",
-    "korean": "의 낮춤말. 삼가 듣다. 용건 부탁 등을",
+    "korean": "삼가 듣다. (용건·부탁 등을) 삼가 받다 (낮춤말)",
     "id": 2000000126,
     "level": "N2",
     "type": "vocab"
@@ -24018,7 +24018,7 @@
   {
     "japanese": "仮名遣い",
     "reading": "かなづかい",
-    "korean": "말을 로 표기하는 법",
+    "korean": "말을 가나로 표기하는 법",
     "id": 2000000351,
     "level": "N2",
     "type": "vocab"
@@ -25850,7 +25850,7 @@
   {
     "japanese": "形容動詞",
     "reading": "けいようどうし",
-    "korean": "형용동사. 형용사",
+    "korean": "형용동사. 나형용사",
     "id": 2000000580,
     "level": "N2",
     "type": "vocab"
@@ -26018,7 +26018,7 @@
   {
     "japanese": "県",
     "reading": "けん",
-    "korean": "현 (일본의 행정 구분. 1 1 2 43)",
+    "korean": "현 (일본의 행정 구분)",
     "id": 2000000601,
     "level": "N2",
     "type": "vocab"
@@ -32426,7 +32426,7 @@
   {
     "japanese": "-遣い",
     "reading": "づかい",
-    "korean": "의 쓰임새. 상태",
+    "korean": "~의 쓰임새. 상태",
     "id": 2000001404,
     "level": "N2",
     "type": "vocab"
@@ -33018,7 +33018,7 @@
   {
     "japanese": "デモ",
     "reading": "デモ",
-    "korean": "데먼스트레이션",
+    "korean": "데모. 시위",
     "id": 2000001478,
     "level": "N2",
     "type": "vocab"
@@ -33218,7 +33218,7 @@
   {
     "japanese": "どう-[同-]",
     "reading": "どう-[同-]",
-    "korean": "같은-. 그 N1, 몸통. 몸체",
+    "korean": "같은-. 그",
     "id": 2000001503,
     "level": "N2",
     "type": "vocab"
@@ -34538,7 +34538,7 @@
   {
     "japanese": "俳句",
     "reading": "はいく",
-    "korean": "일본의 단형시()",
+    "korean": "일본의 단형시",
     "id": 2000001668,
     "level": "N2",
     "type": "vocab"
@@ -36234,7 +36234,7 @@
   {
     "japanese": "振り仮名",
     "reading": "ふりがな",
-    "korean": "한자 옆에 읽는 법을 로 단 것",
+    "korean": "한자 옆에 읽는 법을 가나로 단 것",
     "id": 2000001880,
     "level": "N2",
     "type": "vocab"
@@ -38330,7 +38330,7 @@
   {
     "japanese": "よいしょ",
     "reading": "よいしょ",
-    "korean": "이영차 (무거운 짐을 들 때).  치켜세우다. 부",
+    "korean": "이영차 (무거운 짐을 들 때). 치켜세우다. 부추기다",
     "id": 2000002142,
     "level": "N2",
     "type": "vocab"
@@ -38578,7 +38578,7 @@
   {
     "japanese": "呼び掛ける",
     "reading": "よびかける",
-    "korean": "소래 내어 부르다. 호소하다",
+    "korean": "소리 내어 부르다. 호소하다",
     "id": 2000002173,
     "level": "N2",
     "type": "vocab"
@@ -39002,7 +39002,7 @@
   {
     "japanese": "わ-[和-]",
     "reading": "わ-[和-]",
-    "korean": "일본의 N4, 와이셔츠",
+    "korean": "일본의",
     "id": 2000002226,
     "level": "N2",
     "type": "vocab"
@@ -42202,7 +42202,7 @@
   {
     "japanese": "かた",
     "reading": "かた",
-    "korean": "결말. 처리.  처리되다.  처리하다",
+    "korean": "결말. 처리",
     "id": 1000000383,
     "level": "N1",
     "type": "vocab"
@@ -43922,7 +43922,7 @@
   {
     "japanese": "切り",
     "reading": "きり",
-    "korean": "일단락. 끝맺기. 한도. 끝.  끝이 없다",
+    "korean": "일단락. 끝맺기. 한도. 끝",
     "id": 1000000599,
     "level": "N1",
     "type": "vocab"
@@ -48778,7 +48778,7 @@
   {
     "japanese": "粋",
     "reading": "すい",
-    "korean": "가장 정도가 높은 부분.  정수를 모으다",
+    "korean": "가장 정도가 높은 부분. 정수",
     "id": 1000001206,
     "level": "N1",
     "type": "vocab"
@@ -48802,7 +48802,7 @@
   {
     "japanese": "水洗",
     "reading": "すいせん",
-    "korean": "수세 (+ 화장실)",
+    "korean": "수세 (수세식 화장실 등)",
     "id": 1000001209,
     "level": "N1",
     "type": "vocab"
@@ -51802,7 +51802,7 @@
   {
     "japanese": "つじつま",
     "reading": "つじつま",
-    "korean": "사리. 이치. 계산  (말의)앞뒤가 안맞다",
+    "korean": "사리. 이치. (말의) 앞뒤",
     "id": 1000001584,
     "level": "N1",
     "type": "vocab"
@@ -53178,7 +53178,7 @@
   {
     "japanese": "殿様",
     "reading": "とのさま",
-    "korean": "에도시대의 에 대한 존칭",
+    "korean": "에도시대의 영주(다이묘)에 대한 존칭",
     "id": 1000001757,
     "level": "N1",
     "type": "vocab"
@@ -53802,7 +53802,7 @@
   {
     "japanese": "悩ましい",
     "reading": "なやましい",
-    "korean": "괴롭다. 고민이 되다. 관능()이 자극을 받아서 마음이",
+    "korean": "괴롭다. 고민이 되다. 관능적이다",
     "id": 1000001835,
     "level": "N1",
     "type": "vocab"
@@ -54306,7 +54306,7 @@
   {
     "japanese": "念",
     "reading": "ねん",
-    "korean": "생각. 주의함.  실수가 없도록 신경을 쓰다",
+    "korean": "생각. 주의함",
     "id": 1000001898,
     "level": "N1",
     "type": "vocab"
@@ -54618,7 +54618,7 @@
   {
     "japanese": "拝借",
     "reading": "はいしゃく",
-    "korean": "의 낮춤말. 빌리다",
+    "korean": "빌리다 (낮춤말)",
     "id": 1000001937,
     "level": "N1",
     "type": "vocab"
@@ -56738,7 +56738,7 @@
   {
     "japanese": "辟易",
     "reading": "へきえき",
-    "korean": "질려서 물러남 ≒",
+    "korean": "질려서 물러남",
     "id": 1000002202,
     "level": "N1",
     "type": "vocab"
@@ -58082,7 +58082,7 @@
   {
     "japanese": "微塵",
     "reading": "みじん",
-    "korean": "미진.  추호도 없다",
+    "korean": "미진. 티끌. 추호",
     "id": 1000002370,
     "level": "N1",
     "type": "vocab"
@@ -58530,7 +58530,7 @@
   {
     "japanese": "むちゃくちゃな",
     "reading": "むちゃくちゃな",
-    "korean": "‘’의 힘줌말. 엉망진찬의",
+    "korean": "엉망진창인 ('터무니없는'의 힘줌말)",
     "id": 1000002426,
     "level": "N1",
     "type": "vocab"
@@ -58730,7 +58730,7 @@
   {
     "japanese": "召す",
     "reading": "めす",
-    "korean": "등",
+    "korean": "드시다. 입으시다. 타시다 등 (높임말)",
     "id": 1000002451,
     "level": "N1",
     "type": "vocab"
@@ -60525,6 +60525,478 @@
     "korean": "나",
     "id": 1000002675,
     "level": "N1",
+    "type": "vocab"
+  },
+  {
+    "japanese": "おおぜい",
+    "reading": "おおぜい",
+    "korean": "많이",
+    "id": 5000000575,
+    "level": "N5",
+    "type": "vocab"
+  },
+  {
+    "japanese": "こちらこそ",
+    "reading": "こちらこそ",
+    "korean": "저야말로",
+    "id": 5000000576,
+    "level": "N5",
+    "type": "vocab"
+  },
+  {
+    "japanese": "どうぞ、よろしく",
+    "reading": "どうぞ、よろしく",
+    "korean": "잘 부탁합니다",
+    "id": 5000000577,
+    "level": "N5",
+    "type": "vocab"
+  },
+  {
+    "japanese": "ほんや",
+    "reading": "ほんや",
+    "korean": "책방. 서점",
+    "id": 5000000578,
+    "level": "N5",
+    "type": "vocab"
+  },
+  {
+    "japanese": "写真家",
+    "reading": "しゃしんか",
+    "korean": "사진가",
+    "id": 4000000868,
+    "level": "N4",
+    "type": "vocab"
+  },
+  {
+    "japanese": "いってまいります",
+    "reading": "いってまいります",
+    "korean": "다녀오겠습니다",
+    "id": 4000000869,
+    "level": "N4",
+    "type": "vocab"
+  },
+  {
+    "japanese": "お釣り",
+    "reading": "おつり",
+    "korean": "거스름돈",
+    "id": 4000000870,
+    "level": "N4",
+    "type": "vocab"
+  },
+  {
+    "japanese": "おや",
+    "reading": "おや",
+    "korean": "어라!",
+    "id": 4000000871,
+    "level": "N4",
+    "type": "vocab"
+  },
+  {
+    "japanese": "チェック",
+    "reading": "チェック",
+    "korean": "체크. 점검",
+    "id": 4000000872,
+    "level": "N4",
+    "type": "vocab"
+  },
+  {
+    "japanese": "チケット",
+    "reading": "チケット",
+    "korean": "티켓. 표",
+    "id": 4000000873,
+    "level": "N4",
+    "type": "vocab"
+  },
+  {
+    "japanese": "パートタイム",
+    "reading": "パートタイム",
+    "korean": "파트타임",
+    "id": 4000000874,
+    "level": "N4",
+    "type": "vocab"
+  },
+  {
+    "japanese": "パソコン",
+    "reading": "パソコン",
+    "korean": "컴퓨터",
+    "id": 4000000875,
+    "level": "N4",
+    "type": "vocab"
+  },
+  {
+    "japanese": "レジ",
+    "reading": "レジ",
+    "korean": "계산대. 레지스터",
+    "id": 4000000876,
+    "level": "N4",
+    "type": "vocab"
+  },
+  {
+    "japanese": "空席",
+    "reading": "くうせき",
+    "korean": "공석. 빈자리",
+    "id": 3000001213,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "改札",
+    "reading": "かいさつ",
+    "korean": "개찰",
+    "id": 3000001214,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "朝食",
+    "reading": "ちょうしょく",
+    "korean": "조식. 아침 식사",
+    "id": 3000001215,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "経営学",
+    "reading": "けいえいがく",
+    "korean": "경영학",
+    "id": 3000001216,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "血液型",
+    "reading": "けつえきがた",
+    "korean": "혈액형",
+    "id": 3000001217,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "早退",
+    "reading": "そうたい",
+    "korean": "조퇴",
+    "id": 3000001218,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "専門家",
+    "reading": "せんもんか",
+    "korean": "전문가",
+    "id": 3000001219,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "内側",
+    "reading": "うちがわ",
+    "korean": "안쪽",
+    "id": 3000001220,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "大量",
+    "reading": "たいりょう",
+    "korean": "대량",
+    "id": 3000001221,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "週刊誌",
+    "reading": "しゅうかんし",
+    "korean": "주간지",
+    "id": 3000001222,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "自信",
+    "reading": "じしん",
+    "korean": "자신(자신감)",
+    "id": 3000001223,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "残業",
+    "reading": "ざんぎょう",
+    "korean": "잔업",
+    "id": 3000001224,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "坂道",
+    "reading": "さかみち",
+    "korean": "언덕길. 비탈길",
+    "id": 3000001225,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "カタログ",
+    "reading": "カタログ",
+    "korean": "카탈로그",
+    "id": 3000001226,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "最新",
+    "reading": "さいしん",
+    "korean": "최신",
+    "id": 3000001227,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "キャンセル",
+    "reading": "キャンセル",
+    "korean": "취소",
+    "id": 3000001228,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "早めに",
+    "reading": "はやめに",
+    "korean": "일찌감치",
+    "id": 3000001229,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "半日",
+    "reading": "はんにち",
+    "korean": "반나절",
+    "id": 3000001230,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "申込書",
+    "reading": "もうしこみしょ",
+    "korean": "신청서",
+    "id": 3000001231,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "からから",
+    "reading": "からから",
+    "korean": "바싹바싹(몹시 건조한 모습)",
+    "id": 3000001232,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "外食",
+    "reading": "がいしょく",
+    "korean": "외식",
+    "id": 3000001233,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "自動的な",
+    "reading": "じどうてきな",
+    "korean": "자동적인",
+    "id": 3000001234,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "片方",
+    "reading": "かたほう",
+    "korean": "한쪽",
+    "id": 3000001235,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "リサイクル",
+    "reading": "リサイクル",
+    "korean": "리사이클. 재활용",
+    "id": 3000001236,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "パンフレット",
+    "reading": "パンフレット",
+    "korean": "팸플릿. 소책자",
+    "id": 3000001237,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "代表的な",
+    "reading": "だいひょうてきな",
+    "korean": "대표적인",
+    "id": 3000001238,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "アドバイス",
+    "reading": "アドバイス",
+    "korean": "어드바이스. 충고",
+    "id": 3000001239,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "チャレンジ",
+    "reading": "チャレンジ",
+    "korean": "챌린지. 도전",
+    "id": 3000001240,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "がらがら",
+    "reading": "がらがら",
+    "korean": "텅텅(텅 빈 모습)",
+    "id": 3000001241,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "マナー",
+    "reading": "マナー",
+    "korean": "매너",
+    "id": 3000001242,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "染み",
+    "reading": "しみ",
+    "korean": "얼룩",
+    "id": 3000001243,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "わかりやすい",
+    "reading": "わかりやすい",
+    "korean": "알기 쉽다",
+    "id": 3000001244,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "やり直す",
+    "reading": "やりなおす",
+    "korean": "다시 하다",
+    "id": 3000001245,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "翌年",
+    "reading": "よくとし",
+    "korean": "이듬해",
+    "id": 3000001246,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "共通点",
+    "reading": "きょうつうてん",
+    "korean": "공통점",
+    "id": 3000001247,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "大きさ",
+    "reading": "おおきさ",
+    "korean": "크기",
+    "id": 3000001248,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "キッチン",
+    "reading": "キッチン",
+    "korean": "키친",
+    "id": 3000001249,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "やり方",
+    "reading": "やりかた",
+    "korean": "방식",
+    "id": 3000001250,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "次第に",
+    "reading": "しだいに",
+    "korean": "점차",
+    "id": 3000001251,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "少しずつ",
+    "reading": "すこしずつ",
+    "korean": "조금씩",
+    "id": 3000001252,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "指示",
+    "reading": "しじ",
+    "korean": "지시",
+    "id": 3000001253,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "行き先",
+    "reading": "ゆきさき",
+    "korean": "목적지. 행선지",
+    "id": 3000001254,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "身につける",
+    "reading": "みにつける",
+    "korean": "익히다. 터득하다 / 몸에 걸치다. 몸에 익히다",
+    "id": 3000001255,
+    "level": "N3",
+    "type": "vocab"
+  },
+  {
+    "japanese": "胴",
+    "reading": "どう",
+    "korean": "몸통. 몸체",
+    "id": 1000002676,
+    "level": "N1",
+    "type": "vocab"
+  },
+  {
+    "japanese": "ワイシャツ",
+    "reading": "ワイシャツ",
+    "korean": "와이셔츠",
+    "id": 4000000877,
+    "level": "N4",
+    "type": "vocab"
+  },
+  {
+    "japanese": "難-",
+    "reading": "なん-",
+    "korean": "난- (어려운)",
+    "id": 2000002245,
+    "level": "N2",
     "type": "vocab"
   }
 ]

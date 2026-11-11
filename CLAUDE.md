@@ -4,7 +4,7 @@
 
 ## 프로젝트 개요
 
-- **앱**: 일본어 단어장 웹앱 (JLPT N5~N1 어휘 7,566개 내장)
+- **앱**: 일본어 단어장 웹앱 (JLPT N5~N1 어휘 7,625개 내장)
 - **스택**: React 19 + Vite 8, 단일 컴포넌트 구조 (`src/App.jsx`에 전체 로직)
 - **배포 URL**: https://tmxpffk1725-rocky.github.io/japanese-vocab/
 - **레포**: https://github.com/tmxpffk1725-rocky/japanese-vocab
@@ -26,7 +26,7 @@
 
 ## 단어 데이터
 
-- **기본 데이터**: `public/jlpt_all_fixed.json` (수정본, 7,566개: N5 574 / N4 867 / N3 1,212 / N2 2,241 / N1 2,672)
+- **기본 데이터**: `public/jlpt_all_fixed.json` (수정본 + 교재 신규 56개 + 누락 복원 3개, 7,625개: N5 578 / N4 877 / N3 1,255 / N2 2,242 / N1 2,673)
 - **스키마**: `{ id, japanese, reading, korean, level, type }`
   - `level`: `"N5"~"N1"` 또는 `"추가"` (사용자가 직접 추가한 단어)
   - `type`: 전부 `"vocab"` 고정. 로직에서 안 읽지만 **스키마 호환용으로 유지한다** (지우지 말 것).
@@ -50,6 +50,6 @@
 
 ## 하지 말 것
 
-- JSON 가져오기/내보내기 기능 재추가 (의도적으로 제거함 — 기본 7,566단어가 내장돼 있어 불필요)
+- JSON 가져오기/내보내기 기능 재추가 (의도적으로 제거함 — 기본 7,625단어가 내장돼 있어 불필요)
 - `vite.config.js`의 `base: '/japanese-vocab/'` 변경 (GitHub Pages 경로 필수)
 - 요청 없는 UI 스타일 변경
