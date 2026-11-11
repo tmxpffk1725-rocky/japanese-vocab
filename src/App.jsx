@@ -451,6 +451,7 @@ export default function App() {
                             <RubyText japanese={w.japanese} reading={w.reading} size={18} />
                             {isToday && <span style={{ fontSize: 10, background: "#edf7ed", color: "#4a7a4a", padding: "1px 6px", borderRadius: 8, fontWeight: 700 }}>오늘</span>}
                             {w.level && <span style={{ fontSize: 10, background: levelColors[w.level]?.bg || "#f5f0eb", color: levelColors[w.level]?.color || "#6b5744", padding: "1px 6px", borderRadius: 8, fontWeight: 700, border: `1px solid ${levelColors[w.level]?.border || "#d4c5b5"}` }}>{w.level}</span>}
+                            {w.pos && <span style={styles.posBadge}>{w.pos}</span>}
                           </div>
                           <div style={styles.korean}>{w.korean}</div>
                         </div>
@@ -547,7 +548,8 @@ export default function App() {
                           </button>
                         </div>
                       )}
-                      <div style={{ marginTop: 10, color: "#b09a88", fontSize: 12 }}>
+                      <div style={{ marginTop: 10, color: "#b09a88", fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
+                        {card.pos && <span style={styles.posBadge}>{card.pos}</span>}
                         {card.showKorean ? "한국어 → 일본어" : "일본어 → 한국어"}
                       </div>
                     </div>
@@ -634,5 +636,6 @@ const styles = {
   submitBtn: { width: "100%", padding: "11px", background: "#e8a87c", color: "#fff", border: "none", borderRadius: 12, fontSize: 15, cursor: "pointer", fontWeight: 700, fontFamily: "'Gowun Dodum', sans-serif", transition: "all 0.2s", display: "block" },
   select: { padding: "9px 12px", border: "1.5px solid #d4c5b5", borderRadius: 10, background: "#fff", fontSize: 16, fontFamily: "'Gowun Dodum', sans-serif", color: "#4a3728" },
   flashCard: { borderRadius: 20, border: "2px solid #d4c5b5", background: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 96, padding: 12, textAlign: "center" },
+  posBadge: { fontSize: 10, background: "#f5f0eb", color: "#6b5744", padding: "1px 6px", borderRadius: 8, fontWeight: 700, border: "1px solid #d4c5b5", whiteSpace: "nowrap" },
   toast: { position: "fixed", bottom: 30, left: "50%", transform: "translateX(-50%)", background: "#2d1f14", color: "#e8c89a", padding: "10px 24px", borderRadius: 30, fontSize: 14, zIndex: 999, boxShadow: "0 4px 20px rgba(0,0,0,0.2)" },
 };
